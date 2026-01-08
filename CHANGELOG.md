@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-01-08
+
+### Added
+
+- `SessionRepository` interface for session persistence abstraction
+- `SessionService` with business logic and validation
+- Session lookup methods in storage layer (GetSessionByName, SessionExists)
+- Interactive TUI prompts for session management (Catppuccin theme):
+  - SessionPrompt: full session creation flow with windows
+  - WindowPrompt: window name and command input
+  - SelectMultiplexer: tmux/zellij selector
+  - SelectSession: session picker from list
+  - SelectSessionFromAll: cross-project session picker
+- CLI commands for session management (dual mode: interactive + direct flags):
+  - `sfy session list [-p project]` - List sessions (all or by project)
+  - `sfy session create [name]` - Create session with windows
+  - `sfy session get [id|name]` - Get session details
+  - `sfy session update [id|name]` - Update session properties
+  - `sfy session delete [id|name]` - Delete session with confirmation
+- Auto-generated session names as `{prefix}_{name}` format
+- Cross-project session lookup by name
+- `--force` flag for skipping confirmation on session delete
+
+### Fixed
+
+- Resolve errcheck linting issues in CLI helpers
+
 ## [0.2.0] - 2026-01-08
 
 ### Added
