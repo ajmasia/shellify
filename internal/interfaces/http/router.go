@@ -1,6 +1,7 @@
 package http
 
 import (
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
+	"github.com/ajmasia/shellify/gui"
 	"github.com/ajmasia/shellify/internal/interfaces/http/handlers"
 )
 
@@ -31,6 +33,8 @@ func (s *Server) setupRouter() {
 	// Static file serving
 	if s.config.StaticDir != "" {
 		s.setupStaticHandler(r)
+	} else if gui.Embedded {
+		s.setupEmbeddedHandler(r)
 	}
 
 	s.router = r
@@ -125,5 +129,55 @@ func (s *Server) setupStaticHandler(r *chi.Mux) {
 		// Serve index.html for SPA routing
 		indexPath := filepath.Join(staticDir, "index.html")
 		http.ServeFile(w, r, indexPath)
+	})
+}
+
+func (s *Server) setupEmbeddedHandler(r *chi.Mux) {
+	// Get the dist subdirectory from the embedded filesystem
+	distFS, err := fs.Sub(gui.DistFS, "dist")
+	if err != nil {
+		log.Printf("Warning: Could not access embedded GUI: %v", err)
+		return
+	}
+
+	log.Println("Serving embedded GUI")
+
+	// Create file server from embedded filesystem
+	fileServer := http.FileServer(http.FS(distFS))
+
+	// Serve static assets
+	r.Get("/assets/*", func(w http.ResponseWriter, req *http.Request) {
+		fileServer.ServeHTTP(w, req)
+	})
+
+	// Serve favicon and other root static files
+	r.Get("/shellify.svg", func(w http.ResponseWriter, req *http.Request) {
+		fileServer.ServeHTTP(w, req)
+	})
+
+	// SPA catch-all handler for embedded files
+	r.NotFound(func(w http.ResponseWriter, req *http.Request) {
+		// Don't serve index.html for API routes
+		if strings.HasPrefix(req.URL.Path, "/api/") {
+			http.NotFound(w, req)
+			return
+		}
+
+		// Try to serve the requested file
+		path := strings.TrimPrefix(req.URL.Path, "/")
+		if path == "" {
+			path = "index.html"
+		}
+
+		// Check if file exists in embedded FS
+		if file, err := distFS.Open(path); err == nil {
+			file.Close()
+			fileServer.ServeHTTP(w, req)
+			return
+		}
+
+		// Serve index.html for SPA routing
+		req.URL.Path = "/"
+		fileServer.ServeHTTP(w, req)
 	})
 }
