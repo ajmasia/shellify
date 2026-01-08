@@ -323,3 +323,33 @@ func (s *Storage) CountSessions(projectID string) (int, error) {
 	}
 	return len(sessions), nil
 }
+
+// Additional session operations for SessionRepository interface
+
+// GetSessionByName retrieves a session by name within a project (case-insensitive).
+func (s *Storage) GetSessionByName(projectID, name string) (domain.Session, error) {
+	sessions, err := s.ListSessions(projectID)
+	if err != nil {
+		return domain.Session{}, err
+	}
+
+	for _, meta := range sessions {
+		if strings.EqualFold(meta.Name, name) {
+			return s.GetSession(projectID, meta.ID)
+		}
+	}
+
+	return domain.Session{}, domain.ErrSessionNotFound
+}
+
+// SessionExists checks if a session exists by ID within a project.
+func (s *Storage) SessionExists(projectID, sessionID string) bool {
+	_, err := os.Stat(s.paths.SessionFile(projectID, sessionID))
+	return err == nil
+}
+
+// SessionExistsByName checks if a session with the given name exists (case-insensitive).
+func (s *Storage) SessionExistsByName(projectID, name string) bool {
+	_, err := s.GetSessionByName(projectID, name)
+	return err == nil
+}
