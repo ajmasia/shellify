@@ -45,9 +45,11 @@ type CreateSessionInput struct {
 
 // WindowInput contains the input for creating a window with panes.
 type WindowInput struct {
-	Name          string
-	RootDirection domain.Direction
-	Panes         []PaneInput
+	Name             string
+	WorkingDirectory string
+	Command          string
+	RootDirection    domain.Direction
+	Panes            []PaneInput
 }
 
 // PaneInput contains the input for creating a pane.
@@ -55,6 +57,8 @@ type PaneInput struct {
 	Name             string
 	Command          string
 	WorkingDirectory string
+	Size             float64
+	Direction        string
 }
 
 // UpdateSessionInput contains optional fields for updating a session.
@@ -343,6 +347,24 @@ func (s *SessionService) CloneSession(projectID, idOrName, newName string) (doma
 	cloned.SessionName = generateSessionName(project.SessionPrefix, name)
 
 	return s.sessionRepo.CreateSession(project.ID, cloned)
+}
+
+// FindSessionByID finds a session by ID across all projects.
+// Returns the session and the project ID it belongs to.
+func (s *SessionService) FindSessionByID(sessionID string) (domain.Session, string, error) {
+	projects, err := s.projectRepo.ListProjects()
+	if err != nil {
+		return domain.Session{}, "", err
+	}
+
+	for _, project := range projects {
+		session, err := s.sessionRepo.GetSession(project.ID, sessionID)
+		if err == nil {
+			return session, project.ID, nil
+		}
+	}
+
+	return domain.Session{}, "", domain.ErrSessionNotFound
 }
 
 // generateSessionName creates a session name from project prefix and session name.
