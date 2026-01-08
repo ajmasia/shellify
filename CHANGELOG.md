@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-01-08
+
+### Added
+
+- React GUI application with Vite and TypeScript (`gui/`)
+  - Catppuccin Mocha dark theme with CSS custom properties
+  - MobX store for UI state management
+  - React Router for navigation
+  - Sonner for toast notifications
+- Domain types mirroring Go entities:
+  - Project, Session, Window, Pane types
+  - Multiplexer type constants
+- API client module:
+  - Typed HTTP client wrapper
+  - Full CRUD operations for projects and sessions
+  - Health check endpoint
+- Component library:
+  - Button, IconButton with variants and sizes
+  - Tooltip with Radix UI primitives
+  - Chip for status/category display
+  - FAB (Floating Action Button) circular component
+  - Icon components (Plus, Delete, Edit, Play, Stop, Folder, Back, Close, Settings)
+- Modal system with React Portals:
+  - BaseModal with backdrop blur and dark theme
+  - ConfirmModal for delete confirmations
+  - CreateProjectModal for project creation
+  - CreateSessionModal for session creation
+  - ModalContext and useModal hook
+- Layout components:
+  - MainLayout with header and watermark
+  - Header with navigation and settings
+- Feature modules:
+  - ProjectList with grid view and project cards
+  - SessionList with grid view and session cards
+  - useProjects and useSessions hooks for data fetching
+- Conditional GUI embedding in Go binary:
+  - `gui/embed.go` with `//go:build embed_gui` tag
+  - `gui/embed_stub.go` stub for non-embedded builds
+  - `setupEmbeddedHandler` in HTTP server
+- Build automation:
+  - Makefile targets: gui-install, gui-dev, gui-build, gui-lint, gui-check, build-with-gui
+  - CI jobs: frontend-deps, frontend-lint, frontend-build
+  - Release pipeline with GUI build before GoReleaser
+  - embed_gui build tag in .goreleaser.yaml
+
 ## [0.6.0] - 2026-01-08
 
 ### Added
