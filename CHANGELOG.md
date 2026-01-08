@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-01-08
+
+### Added
+
+- Generator interface for multiplexer script/layout generation
+- TmuxGenerator: generates executable bash scripts for tmux sessions
+  - Recursive pane tree traversal with correct split percentages
+  - Environment variables and pre/post commands support
+  - Terminal size detection and pane-base-index handling
+- ZellijGenerator: generates KDL layout files for zellij sessions
+  - Direction mapping (horizontal/vertical swap for zellij)
+  - Tab focus and default tab template support
+- GeneratorService in application layer for session generation
+- CLI command `sfy session generate [id|name]`:
+  - Output to stdout (default) or file (`-o` flag)
+  - Make tmux scripts executable automatically
+  - Show usage hints after file generation
+- Complete interactive session creation workflow:
+  - Environment variables collection with key-value loop
+  - Pre-session and post-session commands collection
+  - Default window selection for multiple windows
+  - Immediate feedback after each user decision
+  - Full session summary before confirmation
+  - Final confirmation prompt before saving
+- Default pane names (`pane-N`) when not provided by user
+
+### Changed
+
+- Extended `CreateSessionInput` with Environment, PreCommands, PostCommands, DefaultWindowID fields
+
 ## [0.3.0] - 2026-01-08
 
 ### Added
