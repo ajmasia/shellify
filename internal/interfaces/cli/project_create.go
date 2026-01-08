@@ -7,19 +7,23 @@ import (
 
 	"github.com/ajmasia/shellify/internal/application"
 	"github.com/ajmasia/shellify/internal/infrastructure/storage"
+	"github.com/ajmasia/shellify/internal/interfaces/tui"
 )
 
 var projectCreateCmd = &cobra.Command{
-	Use:     "create <name>",
+	Use:     "create [name]",
 	Aliases: []string{"new", "add"},
 	Short:   "Create a new project",
 	Long: `Create a new project with the given name.
 
+If no name is provided, interactive mode will prompt for project details.
+
 Examples:
+  sfy project create                              # Interactive mode
   sfy project create my-project
   sfy project create "My Project" --description "A cool project"
   sfy project create my-project -d "Description" --json`,
-	Args: cobra.ExactArgs(1),
+	Args: cobra.MaximumNArgs(1),
 	RunE: runProjectCreate,
 }
 
@@ -29,8 +33,19 @@ func init() {
 }
 
 func runProjectCreate(cmd *cobra.Command, args []string) error {
-	name := args[0]
-	description, _ := cmd.Flags().GetString("description")
+	var name, description string
+
+	if len(args) == 0 {
+		// Interactive mode
+		var err error
+		name, description, err = tui.ProjectPrompt()
+		if err != nil {
+			return err
+		}
+	} else {
+		name = args[0]
+		description, _ = cmd.Flags().GetString("description")
+	}
 
 	store, err := storage.NewStorage()
 	if err != nil {

@@ -7,19 +7,23 @@ import (
 
 	"github.com/ajmasia/shellify/internal/application"
 	"github.com/ajmasia/shellify/internal/infrastructure/storage"
+	"github.com/ajmasia/shellify/internal/interfaces/tui"
 )
 
 var projectGetCmd = &cobra.Command{
-	Use:     "get <id|name>",
+	Use:     "get [id|name]",
 	Aliases: []string{"show", "info"},
 	Short:   "Get project details",
 	Long: `Get details of a project by ID or name.
 
+If no project is specified, interactive mode will prompt for selection.
+
 Examples:
+  sfy project get                                 # Interactive mode
   sfy project get my-project
   sfy project get abc12345
   sfy project get my-project --json`,
-	Args: cobra.ExactArgs(1),
+	Args: cobra.MaximumNArgs(1),
 	RunE: runProjectGet,
 }
 
@@ -28,15 +32,37 @@ func init() {
 }
 
 func runProjectGet(cmd *cobra.Command, args []string) error {
-	idOrName := args[0]
-
 	store, err := storage.NewStorage()
 	if err != nil {
 		return err
 	}
 
 	svc := application.NewProjectService(store)
-	project, err := svc.GetProject(idOrName)
+
+	var projectID string
+
+	if len(args) == 0 {
+		// Interactive mode: select project
+		projects, err := svc.ListProjects()
+		if err != nil {
+			return err
+		}
+
+		if len(projects) == 0 {
+			return fmt.Errorf("no projects found")
+		}
+
+		selected, err := tui.SelectProject(projects)
+		if err != nil {
+			return err
+		}
+
+		projectID = selected.ID
+	} else {
+		projectID = args[0]
+	}
+
+	project, err := svc.GetProject(projectID)
 	if err != nil {
 		return err
 	}
