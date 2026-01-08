@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"text/tabwriter"
 	"time"
 )
@@ -82,4 +83,15 @@ func truncateID(id string) string {
 		return id
 	}
 	return id[:8]
+}
+
+// generateSessionName creates a session name from project prefix and session name.
+func generateSessionName(prefix, name string) string {
+	sessionName := strings.ToLower(strings.TrimSpace(name))
+	sessionName = strings.ReplaceAll(sessionName, " ", "-")
+
+	if prefix != "" {
+		return prefix + "_" + sessionName
+	}
+	return sessionName
 }
