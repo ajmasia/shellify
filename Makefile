@@ -4,6 +4,7 @@
 BINARY_NAME := sfy
 CMD_DIR := ./cmd/sfy
 BIN_DIR := bin
+GUI_DIR := gui
 VERSION := $(shell cat VERSION)
 COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "none")
 BUILD_DATE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -21,7 +22,8 @@ LDFLAGS := -ldflags "-s -w \
 	-X github.com/ajmasia/shellify/internal/interfaces/cli.Commit=$(COMMIT) \
 	-X github.com/ajmasia/shellify/internal/interfaces/cli.BuildDate=$(BUILD_DATE)"
 
-.PHONY: all build run test test-coverage lint fmt tidy clean install help
+.PHONY: all build build-with-gui run test test-coverage lint fmt tidy clean install help \
+	gui-install gui-dev gui-build gui-lint gui-check
 
 ## all: Build the binary (default target)
 all: build
@@ -99,3 +101,41 @@ help:
 	@echo ""
 	@echo "Targets:"
 	@sed -n 's/^##//p' $(MAKEFILE_LIST) | column -t -s ':' | sed -e 's/^/ /'
+
+# GUI targets
+## gui-install: Install GUI dependencies
+gui-install:
+	@echo "Installing GUI dependencies..."
+	cd $(GUI_DIR) && npm ci
+
+## gui-dev: Start GUI development server
+gui-dev:
+	@echo "Starting GUI development server..."
+	cd $(GUI_DIR) && npm run dev
+
+## gui-build: Build GUI for production
+gui-build:
+	@echo "Building GUI..."
+	cd $(GUI_DIR) && npm run build
+
+## gui-lint: Run GUI linter
+gui-lint:
+	@echo "Running GUI linter..."
+	cd $(GUI_DIR) && npm run lint
+
+## gui-check: Run GUI lint and typecheck
+gui-check:
+	@echo "Running GUI checks..."
+	cd $(GUI_DIR) && npm run lint && npm run typecheck
+
+## build-with-gui: Build binary with embedded GUI
+build-with-gui: gui-build
+	@echo "Building $(BINARY_NAME) v$(VERSION) with embedded GUI..."
+	@mkdir -p $(BIN_DIR)
+	$(GOBUILD) -tags embed_gui $(LDFLAGS) -o $(BIN_DIR)/$(BINARY_NAME) $(CMD_DIR)
+	@echo "Built: $(BIN_DIR)/$(BINARY_NAME) (with GUI)"
+
+## dev: Start development (API server with GUI dev mode)
+dev:
+	@echo "Start API server with: make run ARGS='server'"
+	@echo "Start GUI dev server with: make gui-dev"
