@@ -49,6 +49,7 @@
   --success-color: var(--ctp-green);
   --error-color: var(--ctp-red);
   --warning-color: var(--ctp-yellow);
+  --danger-color: var(--ctp-red);
 
   /* Component tokens */
   --card-bg: var(--ctp-surface0);
@@ -148,6 +149,27 @@ a {
 
 a:hover {
   color: var(--accent-hover);
+}
+
+/* Toast notifications */
+[data-sonner-toaster] [data-sonner-toast] {
+  background: var(--ctp-surface0) !important;
+  border: 1px solid var(--ctp-surface1) !important;
+  color: var(--text-primary) !important;
+  padding: 1rem 1.25rem !important;
+  font-size: 0.9375rem !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast] [data-icon] svg {
+  color: var(--ctp-green) !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-type="error"] [data-icon] svg {
+  color: var(--ctp-red) !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-type="info"] [data-icon] svg {
+  color: var(--ctp-blue) !important;
 }
 
 /* Buttons reset */
