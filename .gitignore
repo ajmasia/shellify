@@ -1,0 +1,45 @@
+# Binaries
+bin/
+dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Output of the go coverage tool
+*.out
+coverage.html
+
+# Go workspace file
+go.work
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+deprecated/
+
+# AI context (kept separate from main codebase)
+CLAUDE.md
+.ai-context/
+
+# GUI build output (until v0.7.0)
+gui/dist/
+gui/node_modules/
+
+# Temporary files
+tmp/
+*.tmp
+*.log
