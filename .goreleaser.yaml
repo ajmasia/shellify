@@ -11,10 +11,8 @@ builds:
       - CGO_ENABLED=0
     goos:
       - linux
-      - darwin
     goarch:
       - amd64
-      - arm64
     ldflags:
       - -s -w
       - -X github.com/ajmasia/shellify/internal/interfaces/cli.Version={{.Version}}
@@ -34,7 +32,6 @@ nfpms:
     license: GPL-3.0
     formats:
       - deb
-      - rpm
 
 checksum:
   name_template: "checksums.txt"
