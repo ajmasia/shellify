@@ -32,8 +32,8 @@ type SessionResponse struct {
 
 // CreateSessionRequest is the request body for creating a session.
 type CreateSessionRequest struct {
-	ProjectID string                       `json:"projectId"`
-	Session   CreateSessionSessionInput    `json:"session"`
+	ProjectID string                    `json:"projectId"`
+	Session   CreateSessionSessionInput `json:"session"`
 }
 
 // CreateSessionSessionInput is the session input for creation.

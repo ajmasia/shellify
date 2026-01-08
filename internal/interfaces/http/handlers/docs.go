@@ -4,10 +4,10 @@ import "net/http"
 
 // APIDocs returns an HTML page with API documentation.
 func APIDocs() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(apiDocsHTML))
+		_, _ = w.Write([]byte(apiDocsHTML))
 	}
 }
 
