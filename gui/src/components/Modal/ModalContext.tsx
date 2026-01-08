@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
+import { useState, useCallback, type ReactNode } from 'react'
+import { ModalContext } from './context'
 import { ConfirmModal } from './ConfirmModal'
 import { CreateProjectModal } from './CreateProjectModal'
 import { CreateSessionModal } from './CreateSessionModal'
@@ -8,15 +9,6 @@ import type {
   CreateProjectModalProps,
   CreateSessionModalProps,
 } from './types'
-
-interface ModalContextValue {
-  openConfirmModal: (props: Omit<ConfirmModalProps, 'isOpen' | 'onClose'>) => void
-  openCreateProjectModal: (props: Omit<CreateProjectModalProps, 'isOpen' | 'onClose'>) => void
-  openCreateSessionModal: (props: Omit<CreateSessionModalProps, 'isOpen' | 'onClose'>) => void
-  closeModal: () => void
-}
-
-const ModalContext = createContext<ModalContextValue | null>(null)
 
 interface ModalProviderProps {
   children: ReactNode
@@ -63,12 +55,4 @@ export function ModalProvider({ children }: ModalProviderProps) {
       )}
     </ModalContext.Provider>
   )
-}
-
-export function useModal(): ModalContextValue {
-  const context = useContext(ModalContext)
-  if (!context) {
-    throw new Error('useModal must be used within a ModalProvider')
-  }
-  return context
 }

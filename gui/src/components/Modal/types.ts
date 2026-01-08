@@ -42,3 +42,10 @@ export type ModalType =
   | { type: 'createProject'; props: Omit<CreateProjectModalProps, 'isOpen' | 'onClose'> }
   | { type: 'createSession'; props: Omit<CreateSessionModalProps, 'isOpen' | 'onClose'> }
   | null
+
+export interface ModalContextValue {
+  openConfirmModal: (props: Omit<ConfirmModalProps, 'isOpen' | 'onClose'>) => void
+  openCreateProjectModal: (props: Omit<CreateProjectModalProps, 'isOpen' | 'onClose'>) => void
+  openCreateSessionModal: (props: Omit<CreateSessionModalProps, 'isOpen' | 'onClose'>) => void
+  closeModal: () => void
+}

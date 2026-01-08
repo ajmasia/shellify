@@ -1,2 +1,3 @@
 export { UIStore } from './UIStore'
-export { StoreProvider, useStores, useUIStore } from './StoreContext'
+export { StoreProvider } from './StoreContext'
+export { useStores, useUIStore } from './useStores'
