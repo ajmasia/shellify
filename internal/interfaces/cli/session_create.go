@@ -83,18 +83,48 @@ func runSessionCreate(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
+		// Build session name for summary
+		sessionName := generateSessionName(project.SessionPrefix, result.Name)
+
+		// Show summary
+		tui.PrintSessionSummary(result, sessionName)
+
+		// Confirm creation
+		confirmed, err := tui.ConfirmSessionCreation()
+		if err != nil {
+			return err
+		}
+		if !confirmed {
+			fmt.Println("Aborted")
+			return nil
+		}
+
 		input = application.CreateSessionInput{
 			Name:             result.Name,
 			Description:      result.Description,
 			WorkingDirectory: result.WorkingDirectory,
 			Multiplexer:      result.Multiplexer,
+			Environment:      result.Environment,
+			PreCommands:      result.PreCommands,
+			PostCommands:     result.PostCommands,
+			DefaultWindowID:  result.DefaultWindowID,
 			Windows:          make([]application.WindowInput, len(result.Windows)),
 		}
 
 		for i, w := range result.Windows {
+			panes := make([]application.PaneInput, len(w.Panes))
+			for j, p := range w.Panes {
+				panes[j] = application.PaneInput{
+					Name:             p.Name,
+					Command:          p.Command,
+					WorkingDirectory: p.WorkingDirectory,
+				}
+			}
+
 			input.Windows[i] = application.WindowInput{
-				Name:    w.Name,
-				Command: w.Command,
+				Name:          w.Name,
+				RootDirection: w.RootDirection,
+				Panes:         panes,
 			}
 		}
 	} else {
@@ -106,9 +136,15 @@ func runSessionCreate(cmd *cobra.Command, args []string) error {
 		mux, _ := cmd.Flags().GetString("multiplexer")
 		input.Multiplexer = domain.MultiplexerType(mux)
 
-		// Default window if none specified
+		// Default window with one pane if none specified
 		input.Windows = []application.WindowInput{
-			{Name: "main", Command: ""},
+			{
+				Name:          "main",
+				RootDirection: domain.DirectionHorizontal,
+				Panes: []application.PaneInput{
+					{Name: "main", Command: ""},
+				},
+			},
 		}
 	}
 
