@@ -1,0 +1,37 @@
+.fab {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 3.5rem;
+  height: 3.5rem;
+  border: none;
+  border-radius: 50%;
+  background-color: var(--fab-bg);
+  color: var(--ctp-crust);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg);
+  transition:
+    background-color 0.15s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+  z-index: 100;
+}
+
+.fab:hover {
+  background-color: var(--fab-hover);
+  transform: scale(1.05);
+  box-shadow: var(--shadow-xl);
+}
+
+.fab:active {
+  transform: scale(0.98);
+}
+
+.fab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
