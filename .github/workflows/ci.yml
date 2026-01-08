@@ -78,3 +78,66 @@ jobs:
 
       - name: Build
         run: go build -v ./cmd/sfy
+
+  frontend-deps:
+    name: Frontend Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: gui/package-lock.json
+
+      - name: Install dependencies
+        run: cd gui && npm ci
+
+  frontend-lint:
+    name: Frontend Lint
+    runs-on: ubuntu-latest
+    needs: [frontend-deps]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: gui/package-lock.json
+
+      - name: Install dependencies
+        run: cd gui && npm ci
+
+      - name: Lint
+        run: cd gui && npm run lint
+
+      - name: Type check
+        run: cd gui && npm run typecheck
+
+  frontend-build:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+    needs: [frontend-lint]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: gui/package-lock.json
+
+      - name: Install dependencies
+        run: cd gui && npm ci
+
+      - name: Build
+        run: cd gui && npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gui-dist
+          path: gui/dist
+          retention-days: 1
