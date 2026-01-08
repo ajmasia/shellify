@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-01-08
+
+### Added
+
+- HTTP API server using Chi router (`internal/interfaces/http/`)
+  - Middleware stack: RequestID, RealIP, Logger, Recoverer, Timeout, CORS
+  - Standard JSON response format: `{success, data, error}`
+  - Domain error to HTTP status mapping
+- Project API endpoints:
+  - `GET /api/projects` - List all projects with session counts
+  - `POST /api/projects` - Create project
+  - `GET /api/projects/{id}` - Get project
+  - `PUT /api/projects/{id}` - Update project
+  - `DELETE /api/projects/{id}` - Delete project (with `?force=true` option)
+  - `GET /api/projects/{id}/sessions` - List project sessions
+  - `POST /api/projects/{id}/backup` - Backup project with sessions
+  - `POST /api/projects/{id}/restore` - Restore sessions
+- Session API endpoints:
+  - `GET /api/sessions` - List all sessions
+  - `POST /api/sessions` - Create session
+  - `GET /api/sessions/running` - List running sessions
+  - `GET /api/sessions/{id}` - Get session
+  - `PUT /api/sessions/{id}` - Update session
+  - `DELETE /api/sessions/{id}` - Delete session
+  - `POST /api/sessions/{id}/clone` - Clone session
+  - `POST /api/sessions/{id}/launch` - Launch session (detached)
+  - `POST /api/sessions/{id}/attach` - Attach to running session
+  - `POST /api/sessions/{id}/stop` - Stop running session
+  - `GET /api/sessions/{id}/status` - Check session status
+- Settings API endpoints:
+  - `GET /api/settings` - Get application settings
+  - `PUT /api/settings` - Update settings
+- Utility endpoints:
+  - `GET /api/health` - Health check
+  - `GET /api/docs` - API documentation (HTML)
+- CLI server commands:
+  - `sfy server` - Start HTTP server (foreground)
+  - `sfy server -d` - Start as daemon (background)
+  - `sfy server stop` - Stop running daemon
+  - `sfy server status` - Check daemon status
+  - Flags: `--port`, `--host`, `--static`, `--open`
+- `FindSessionByID` method in SessionService for cross-project lookup
+- Static file serving with SPA fallback support
+
 ## [0.5.0] - 2026-01-08
 
 ### Added
