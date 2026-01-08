@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -282,4 +283,43 @@ func (s *Storage) DeleteSession(projectID, sessionID string) error {
 	}
 
 	return nil
+}
+
+// Additional project operations for ProjectRepository interface
+
+// GetProjectByName retrieves a project by name (case-insensitive).
+func (s *Storage) GetProjectByName(name string) (domain.Project, error) {
+	projects, err := s.ListProjects()
+	if err != nil {
+		return domain.Project{}, err
+	}
+
+	for _, p := range projects {
+		if strings.EqualFold(p.Name, name) {
+			return p, nil
+		}
+	}
+
+	return domain.Project{}, domain.ErrProjectNotFound
+}
+
+// ProjectExists checks if a project exists by ID.
+func (s *Storage) ProjectExists(id string) bool {
+	_, err := os.Stat(s.paths.ProjectFile(id))
+	return err == nil
+}
+
+// ProjectExistsByName checks if a project with the given name exists (case-insensitive).
+func (s *Storage) ProjectExistsByName(name string) bool {
+	_, err := s.GetProjectByName(name)
+	return err == nil
+}
+
+// CountSessions returns the number of sessions in a project.
+func (s *Storage) CountSessions(projectID string) (int, error) {
+	sessions, err := s.ListSessions(projectID)
+	if err != nil {
+		return 0, err
+	}
+	return len(sessions), nil
 }

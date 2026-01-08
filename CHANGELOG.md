@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-01-08
+
+### Added
+
+- `ProjectRepository` interface for project persistence abstraction
+- `ProjectService` with business logic and validation
+- Interactive TUI with `charmbracelet/huh` (Catppuccin theme)
+- CLI commands for project management (dual mode: interactive + direct flags):
+  - `sfy project list` - List all projects
+  - `sfy project create [name]` - Create project (interactive if no name)
+  - `sfy project get [id|name]` - Get details (interactive selection if no args)
+  - `sfy project update [id|name]` - Update project (interactive field selection)
+  - `sfy project delete [id|name]` - Delete project (interactive selection + confirmation)
+- Input validation (empty name, duplicate name checks)
+- `--force` flag for skipping confirmation on delete
+- JSON output support (`--json` flag) for all project commands
+
 ## [0.1.2] - 2026-01-08
 
 ### Changed
