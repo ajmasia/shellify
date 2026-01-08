@@ -1,0 +1,8 @@
+export type { IconProps } from './types'
+export { PlusIcon } from './PlusIcon'
+export { DeleteIcon } from './DeleteIcon'
+export { EditIcon } from './EditIcon'
+export { FolderIcon } from './FolderIcon'
+export { BackIcon } from './BackIcon'
+export { CloseIcon } from './CloseIcon'
+export { SettingsIcon } from './SettingsIcon'
