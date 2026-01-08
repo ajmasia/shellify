@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-01-08
+
+### Added
+
+- Multiplexer detection infrastructure (`internal/infrastructure/multiplexer/`)
+  - `CheckMultiplexers()`: detect tmux/zellij availability
+  - `GetInstallInstructions()`: user-friendly installation help
+- Terminal emulator detection (alacritty, kitty, wezterm, gnome-terminal, konsole, xfce4-terminal, xterm)
+- `Launcher` for session execution and management:
+  - Launch sessions (replaces current process for CLI)
+  - Launch detached sessions (new terminal window for API)
+  - Attach to running sessions
+  - Stop running sessions
+  - Check session running/attached status
+- `LauncherService` in application layer for session lifecycle management
+- CLI commands for session control:
+  - `sfy session launch [id|name]` - Launch or attach to session
+  - `sfy session attach [id|name]` - Attach to running session
+  - `sfy session stop [id|name]` - Stop running session
+  - `sfy session status [id|name]` - Show session running status
+  - `sfy session clone [id|name]` - Clone existing session
+  - `sfy session kill` - Multi-select and kill running sessions
+- Status column in `sfy session list` showing running/stopped state
+- `SelectMultipleSessions` TUI prompt for batch operations
+- `CloneSession` method in SessionService
+
 ## [0.4.0] - 2026-01-08
 
 ### Added

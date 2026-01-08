@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ajmasia/shellify/internal/application"
+	"github.com/ajmasia/shellify/internal/infrastructure/multiplexer"
 	"github.com/ajmasia/shellify/internal/infrastructure/storage"
 )
 
@@ -39,6 +40,12 @@ func runSessionList(cmd *cobra.Command, args []string) error {
 	projectFilter, _ := cmd.Flags().GetString("project")
 	jsonOutput, _ := cmd.Flags().GetBool("json")
 
+	// Create launcher to check running status
+	launcher, err := multiplexer.NewLauncher()
+	if err != nil {
+		return err
+	}
+
 	if projectFilter != "" {
 		// List sessions for specific project
 		project, err := projectSvc.GetProject(projectFilter)
@@ -60,14 +67,22 @@ func runSessionList(cmd *cobra.Command, args []string) error {
 			return nil
 		}
 
-		headers := []string{"ID", "NAME", "MULTIPLEXER", "UPDATED"}
+		headers := []string{"ID", "NAME", "MULTIPLEXER", "UPDATED", "STATUS"}
 		rows := make([][]string, len(sessions))
 		for i, s := range sessions {
+			// Check if session is running
+			fullSession, _ := sessionSvc.GetSession(project.ID, s.ID)
+			status := "stopped"
+			if launcher.IsRunning(fullSession.SessionName, fullSession.TargetMultiplexer) {
+				status = "running"
+			}
+
 			rows[i] = []string{
 				truncateID(s.ID),
 				s.Name,
 				string(s.TargetMultiplexer),
 				formatTime(s.UpdatedAt),
+				status,
 			}
 		}
 
@@ -91,15 +106,23 @@ func runSessionList(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	headers := []string{"ID", "NAME", "PROJECT", "MULTIPLEXER", "UPDATED"}
+	headers := []string{"ID", "NAME", "PROJECT", "MULTIPLEXER", "UPDATED", "STATUS"}
 	rows := make([][]string, len(allSessions))
 	for i, s := range allSessions {
+		// Check if session is running
+		fullSession, _ := sessionSvc.GetSession(s.ProjectID, s.Session.ID)
+		status := "stopped"
+		if launcher.IsRunning(fullSession.SessionName, fullSession.TargetMultiplexer) {
+			status = "running"
+		}
+
 		rows[i] = []string{
 			truncateID(s.Session.ID),
 			s.Session.Name,
 			s.ProjectName,
 			string(s.Session.TargetMultiplexer),
 			formatTime(s.Session.UpdatedAt),
+			status,
 		}
 	}
 

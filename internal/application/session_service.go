@@ -313,6 +313,38 @@ func (s *SessionService) getProject(idOrName string) (domain.Project, error) {
 	return domain.Project{}, err
 }
 
+// CloneSession creates a copy of an existing session with a new name.
+func (s *SessionService) CloneSession(projectID, idOrName, newName string) (domain.Session, error) {
+	project, err := s.getProject(projectID)
+	if err != nil {
+		return domain.Session{}, err
+	}
+
+	// Get the original session
+	original, err := s.GetSession(project.ID, idOrName)
+	if err != nil {
+		return domain.Session{}, err
+	}
+
+	// Validate new name
+	name := strings.TrimSpace(newName)
+	if name == "" {
+		name = original.Name + " (copy)"
+	}
+
+	if s.sessionRepo.SessionExistsByName(project.ID, name) {
+		return domain.Session{}, domain.ErrSessionAlreadyExists
+	}
+
+	// Create cloned session
+	cloned := original
+	cloned.ID = uuid.New().String()
+	cloned.Name = name
+	cloned.SessionName = generateSessionName(project.SessionPrefix, name)
+
+	return s.sessionRepo.CreateSession(project.ID, cloned)
+}
+
 // generateSessionName creates a session name from project prefix and session name.
 func generateSessionName(prefix, name string) string {
 	sessionName := strings.ToLower(strings.TrimSpace(name))
