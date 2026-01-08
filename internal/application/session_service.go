@@ -36,13 +36,25 @@ type CreateSessionInput struct {
 	Description      string
 	WorkingDirectory string
 	Multiplexer      domain.MultiplexerType
+	Environment      map[string]string
+	PreCommands      []string
+	PostCommands     []string
 	Windows          []WindowInput
+	DefaultWindowID  string
 }
 
-// WindowInput contains the input for creating a window (simplified: one pane).
+// WindowInput contains the input for creating a window with panes.
 type WindowInput struct {
-	Name    string
-	Command string
+	Name          string
+	RootDirection domain.Direction
+	Panes         []PaneInput
+}
+
+// PaneInput contains the input for creating a pane.
+type PaneInput struct {
+	Name             string
+	Command          string
+	WorkingDirectory string
 }
 
 // UpdateSessionInput contains optional fields for updating a session.
@@ -140,34 +152,83 @@ func (s *SessionService) CreateSession(projectID string, input CreateSessionInpu
 		SessionName:       generateSessionName(project.SessionPrefix, name),
 		Description:       strings.TrimSpace(input.Description),
 		WorkingDirectory:  strings.TrimSpace(input.WorkingDirectory),
+		Environment:       input.Environment,
+		PreCommands:       input.PreCommands,
+		PostCommands:      input.PostCommands,
 		TargetMultiplexer: input.Multiplexer,
 		Windows:           make([]domain.Window, len(input.Windows)),
 	}
 
-	// Build windows (simplified: one pane per window)
+	// Build windows with pane trees
 	for i, w := range input.Windows {
 		windowName := strings.TrimSpace(w.Name)
 		if windowName == "" {
 			windowName = fmt.Sprintf("window-%d", i+1)
 		}
 
-		session.Windows[i] = domain.Window{
+		direction := w.RootDirection
+		if direction == "" {
+			direction = domain.DirectionHorizontal
+		}
+
+		window := domain.Window{
 			ID:            fmt.Sprintf("w%d", i+1),
 			Name:          windowName,
-			RootDirection: domain.DirectionHorizontal,
-			Panes: []domain.Pane{
-				{
-					ID:      "p1",
-					Name:    windowName,
-					Command: strings.TrimSpace(w.Command),
-					Size:    100,
-				},
-			},
+			RootDirection: direction,
 		}
+
+		// Build panes
+		panes := make([]domain.Pane, len(w.Panes))
+		sizePerPane := 100.0
+		if len(w.Panes) > 0 {
+			sizePerPane = 100.0 / float64(len(w.Panes))
+		}
+
+		for j, p := range w.Panes {
+			paneName := strings.TrimSpace(p.Name)
+			if paneName == "" {
+				paneName = fmt.Sprintf("pane-%d", j+1)
+			}
+
+			panes[j] = domain.Pane{
+				ID:               fmt.Sprintf("p%d", j+1),
+				Name:             paneName,
+				Command:          strings.TrimSpace(p.Command),
+				WorkingDirectory: strings.TrimSpace(p.WorkingDirectory),
+				Size:             sizePerPane,
+			}
+		}
+
+		// Single pane: store directly
+		// Multiple panes: wrap in root container
+		if len(panes) == 1 {
+			window.Panes = panes
+		} else if len(panes) > 1 {
+			rootPane := domain.Pane{
+				ID:        "root",
+				Size:      100,
+				Direction: direction,
+				Children:  panes,
+			}
+			window.Panes = []domain.Pane{rootPane}
+		} else {
+			// No panes provided, create default
+			window.Panes = []domain.Pane{
+				{
+					ID:   "p1",
+					Name: windowName,
+					Size: 100,
+				},
+			}
+		}
+
+		session.Windows[i] = window
 	}
 
-	// Set default window to first window
-	if len(session.Windows) > 0 {
+	// Set default window
+	if input.DefaultWindowID != "" {
+		session.DefaultWindowID = input.DefaultWindowID
+	} else if len(session.Windows) > 0 {
 		session.DefaultWindowID = session.Windows[0].ID
 	}
 

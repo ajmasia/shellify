@@ -118,7 +118,11 @@ func TestSessionService_CreateSession(t *testing.T) {
 			Description: "Development session",
 			Multiplexer: domain.MultiplexerTmux,
 			Windows: []WindowInput{
-				{Name: "editor", Command: "nvim ."},
+				{
+					Name:          "editor",
+					RootDirection: domain.DirectionHorizontal,
+					Panes:         []PaneInput{{Name: "editor", Command: "nvim ."}},
+				},
 			},
 		}
 
@@ -231,7 +235,7 @@ func TestSessionService_CreateSession(t *testing.T) {
 		input := CreateSessionInput{
 			Name:        "dev",
 			Multiplexer: domain.MultiplexerTmux,
-			Windows:     []WindowInput{{Name: "", Command: "bash"}},
+			Windows:     []WindowInput{{Name: "", Panes: []PaneInput{{Command: "bash"}}}},
 		}
 
 		session, err := svc.CreateSession(project.ID, input)
