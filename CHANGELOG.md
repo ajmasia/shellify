@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-01-08
+
+### Changed
+
+- Reduce release targets to linux/amd64 and .deb only (save CI minutes)
+
 ## [0.1.1] - 2026-01-08
 
 ### Fixed
