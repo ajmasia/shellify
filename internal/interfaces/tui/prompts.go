@@ -172,16 +172,28 @@ type SessionPromptResult struct {
 	Description      string
 	WorkingDirectory string
 	Multiplexer      domain.MultiplexerType
+	Environment      map[string]string
+	PreCommands      []string
+	PostCommands     []string
 	Windows          []WindowPromptResult
+	DefaultWindowID  string
 }
 
 // WindowPromptResult contains the result of WindowPrompt.
 type WindowPromptResult struct {
-	Name    string
-	Command string
+	Name          string
+	RootDirection domain.Direction
+	Panes         []PanePromptResult
 }
 
-// SessionPrompt collects session information interactively (simplified for v0.3.0).
+// PanePromptResult contains the result of PanePrompt.
+type PanePromptResult struct {
+	Name             string
+	Command          string
+	WorkingDirectory string
+}
+
+// SessionPrompt collects session information interactively with feedback.
 func SessionPrompt() (SessionPromptResult, error) {
 	var result SessionPromptResult
 
@@ -200,12 +212,14 @@ func SessionPrompt() (SessionPromptResult, error) {
 	if err != nil {
 		return result, err
 	}
+	fmt.Printf("Name: %s\n", result.Name)
 
 	// Multiplexer
 	result.Multiplexer, err = SelectMultiplexer()
 	if err != nil {
 		return result, err
 	}
+	fmt.Printf("Multiplexer: %s\n", result.Multiplexer)
 
 	// Working directory
 	result.WorkingDirectory = "~"
@@ -221,6 +235,7 @@ func SessionPrompt() (SessionPromptResult, error) {
 	if result.WorkingDirectory == "" {
 		result.WorkingDirectory = "~"
 	}
+	fmt.Printf("Directory: %s\n", result.WorkingDirectory)
 
 	// Description
 	err = huh.NewInput().
@@ -231,8 +246,30 @@ func SessionPrompt() (SessionPromptResult, error) {
 	if err != nil {
 		return result, err
 	}
+	if result.Description != "" {
+		fmt.Printf("Description: %s\n", result.Description)
+	}
+
+	// Environment variables
+	result.Environment, err = promptEnvironmentVariables()
+	if err != nil {
+		return result, err
+	}
+
+	// Pre-session commands
+	result.PreCommands, err = promptCommandList("pre-session")
+	if err != nil {
+		return result, err
+	}
+
+	// Post-session commands
+	result.PostCommands, err = promptCommandList("post-session")
+	if err != nil {
+		return result, err
+	}
 
 	// Windows loop
+	fmt.Println()
 	windowNum := 1
 	for {
 		window, err := WindowPrompt(windowNum)
@@ -240,6 +277,7 @@ func SessionPrompt() (SessionPromptResult, error) {
 			return result, err
 		}
 		result.Windows = append(result.Windows, window)
+		fmt.Printf("Window %d: %s (%d panes)\n", windowNum, window.Name, len(window.Panes))
 		windowNum++
 
 		var addMore bool
@@ -257,14 +295,183 @@ func SessionPrompt() (SessionPromptResult, error) {
 		}
 	}
 
+	// Default window selection (if multiple windows)
+	if len(result.Windows) > 1 {
+		result.DefaultWindowID, err = promptDefaultWindow(result.Windows)
+		if err != nil {
+			return result, err
+		}
+	}
+
 	return result, nil
 }
 
-// WindowPrompt collects window information (simplified: one pane per window).
+// promptEnvironmentVariables collects environment variables interactively.
+func promptEnvironmentVariables() (map[string]string, error) {
+	var addEnv bool
+	err := huh.NewConfirm().
+		Title("Add environment variables?").
+		Value(&addEnv).
+		WithTheme(theme).
+		Run()
+	if err != nil {
+		return nil, err
+	}
+
+	if !addEnv {
+		return nil, nil
+	}
+
+	envVars := make(map[string]string)
+
+	for {
+		var key, value string
+
+		err := huh.NewInput().
+			Title("Variable name").
+			Value(&key).
+			Validate(func(s string) error {
+				if strings.TrimSpace(s) == "" {
+					return fmt.Errorf("variable name is required")
+				}
+				return nil
+			}).
+			WithTheme(theme).
+			Run()
+		if err != nil {
+			return nil, err
+		}
+
+		err = huh.NewInput().
+			Title("Value (optional)").
+			Value(&value).
+			WithTheme(theme).
+			Run()
+		if err != nil {
+			return nil, err
+		}
+
+		envVars[key] = value
+		fmt.Printf("Env: %s=%s\n", key, value)
+
+		var addMore bool
+		err = huh.NewConfirm().
+			Title("Add another environment variable?").
+			Value(&addMore).
+			WithTheme(theme).
+			Run()
+		if err != nil {
+			return nil, err
+		}
+
+		if !addMore {
+			break
+		}
+	}
+
+	return envVars, nil
+}
+
+// promptCommandList collects a list of commands (pre or post session).
+func promptCommandList(cmdType string) ([]string, error) {
+	var addCmd bool
+	err := huh.NewConfirm().
+		Title(fmt.Sprintf("Add %s commands?", cmdType)).
+		Value(&addCmd).
+		WithTheme(theme).
+		Run()
+	if err != nil {
+		return nil, err
+	}
+
+	if !addCmd {
+		return nil, nil
+	}
+
+	var commands []string
+
+	for {
+		var cmd string
+
+		err := huh.NewInput().
+			Title("Command").
+			Value(&cmd).
+			Validate(func(s string) error {
+				if strings.TrimSpace(s) == "" {
+					return fmt.Errorf("command is required")
+				}
+				return nil
+			}).
+			WithTheme(theme).
+			Run()
+		if err != nil {
+			return nil, err
+		}
+
+		commands = append(commands, cmd)
+		prefix := "Pre"
+		if cmdType == "post-session" {
+			prefix = "Post"
+		}
+		fmt.Printf("%s: %s\n", prefix, cmd)
+
+		var addMore bool
+		err = huh.NewConfirm().
+			Title("Add another command?").
+			Value(&addMore).
+			WithTheme(theme).
+			Run()
+		if err != nil {
+			return nil, err
+		}
+
+		if !addMore {
+			break
+		}
+	}
+
+	return commands, nil
+}
+
+// promptDefaultWindow prompts user to select the default window.
+func promptDefaultWindow(windows []WindowPromptResult) (string, error) {
+	options := make([]huh.Option[string], len(windows)+1)
+	options[0] = huh.NewOption("First window (default)", "")
+
+	for i, w := range windows {
+		options[i+1] = huh.NewOption(fmt.Sprintf("%s (window %d)", w.Name, i+1), fmt.Sprintf("w%d", i+1))
+	}
+
+	var selected string
+	err := huh.NewSelect[string]().
+		Title("Select default window").
+		Options(options...).
+		Value(&selected).
+		WithTheme(theme).
+		Run()
+	if err != nil {
+		return "", err
+	}
+
+	if selected != "" {
+		// Find window name for feedback
+		for i, w := range windows {
+			if fmt.Sprintf("w%d", i+1) == selected {
+				fmt.Printf("Default: %s (window %d)\n", w.Name, i+1)
+				break
+			}
+		}
+	}
+
+	return selected, nil
+}
+
+// WindowPrompt collects window information with multiple panes support.
 func WindowPrompt(windowNum int) (WindowPromptResult, error) {
 	var result WindowPromptResult
 	result.Name = fmt.Sprintf("window-%d", windowNum)
 
+	// Window name
 	err := huh.NewInput().
 		Title("Window name").
 		Value(&result.Name).
@@ -278,6 +485,59 @@ func WindowPrompt(windowNum int) (WindowPromptResult, error) {
 		result.Name = fmt.Sprintf("window-%d", windowNum)
 	}
 
+	// Split direction
+	result.RootDirection, err = SelectDirection()
+	if err != nil {
+		return result, err
+	}
+
+	// Panes loop
+	paneNum := 1
+	for {
+		pane, err := PanePrompt(paneNum)
+		if err != nil {
+			return result, err
+		}
+		result.Panes = append(result.Panes, pane)
+		paneNum++
+
+		var addMore bool
+		err = huh.NewConfirm().
+			Title("Add another pane?").
+			Value(&addMore).
+			WithTheme(theme).
+			Run()
+		if err != nil {
+			return result, err
+		}
+
+		if !addMore {
+			break
+		}
+	}
+
+	return result, nil
+}
+
+// PanePrompt collects pane information interactively.
+func PanePrompt(paneNum int) (PanePromptResult, error) {
+	var result PanePromptResult
+
+	// Pane name (optional, defaults to pane-N)
+	err := huh.NewInput().
+		Title(fmt.Sprintf("Pane %d name (optional)", paneNum)).
+		Value(&result.Name).
+		Placeholder(fmt.Sprintf("pane-%d", paneNum)).
+		WithTheme(theme).
+		Run()
+	if err != nil {
+		return result, err
+	}
+	if result.Name == "" {
+		result.Name = fmt.Sprintf("pane-%d", paneNum)
+	}
+
+	// Command (optional)
 	err = huh.NewInput().
 		Title("Command (optional)").
 		Value(&result.Command).
@@ -288,7 +548,38 @@ func WindowPrompt(windowNum int) (WindowPromptResult, error) {
 		return result, err
 	}
 
+	// Working directory (optional)
+	err = huh.NewInput().
+		Title("Working directory (optional)").
+		Value(&result.WorkingDirectory).
+		Placeholder("Leave empty for session default").
+		WithTheme(theme).
+		Run()
+	if err != nil {
+		return result, err
+	}
+
 	return result, nil
+}
+
+// SelectDirection shows a split direction selector.
+func SelectDirection() (domain.Direction, error) {
+	var selected string
+
+	err := huh.NewSelect[string]().
+		Title("Split direction").
+		Options(
+			huh.NewOption("Horizontal (side by side)", "horizontal"),
+			huh.NewOption("Vertical (stacked)", "vertical"),
+		).
+		Value(&selected).
+		WithTheme(theme).
+		Run()
+	if err != nil {
+		return "", err
+	}
+
+	return domain.Direction(selected), nil
 }
 
 // SelectMultiplexer shows a multiplexer type selector.
@@ -413,4 +704,91 @@ func SelectSessionUpdateFields() (name, desc, workDir, multiplexer bool, err err
 	}
 
 	return name, desc, workDir, multiplexer, nil
+}
+
+// PrintSessionSummary prints a complete summary of the session configuration.
+func PrintSessionSummary(result SessionPromptResult, sessionName string) {
+	fmt.Println()
+	fmt.Println("Session Summary")
+	fmt.Println("---------------")
+	fmt.Printf("Name:        %s\n", result.Name)
+	fmt.Printf("Session:     %s\n", sessionName)
+	if result.Description != "" {
+		fmt.Printf("Description: %s\n", result.Description)
+	}
+	fmt.Printf("Multiplexer: %s\n", result.Multiplexer)
+	fmt.Printf("Directory:   %s\n", result.WorkingDirectory)
+	fmt.Printf("Windows:     %d\n", len(result.Windows))
+
+	// Count total panes
+	totalPanes := 0
+	for _, w := range result.Windows {
+		totalPanes += len(w.Panes)
+	}
+	fmt.Printf("Panes:       %d\n", totalPanes)
+
+	// Default window
+	if result.DefaultWindowID != "" {
+		for i, w := range result.Windows {
+			if fmt.Sprintf("w%d", i+1) == result.DefaultWindowID {
+				fmt.Printf("Default:     %s (window %d)\n", w.Name, i+1)
+				break
+			}
+		}
+	}
+
+	// Environment variables
+	if len(result.Environment) > 0 {
+		fmt.Println()
+		fmt.Println("Environment")
+		for k, v := range result.Environment {
+			fmt.Printf("  %s=%s\n", k, v)
+		}
+	}
+
+	// Pre-commands
+	if len(result.PreCommands) > 0 {
+		fmt.Println()
+		fmt.Println("Pre-commands")
+		for _, cmd := range result.PreCommands {
+			fmt.Printf("  %s\n", cmd)
+		}
+	}
+
+	// Post-commands
+	if len(result.PostCommands) > 0 {
+		fmt.Println()
+		fmt.Println("Post-commands")
+		for _, cmd := range result.PostCommands {
+			fmt.Printf("  %s\n", cmd)
+		}
+	}
+
+	// Layout
+	fmt.Println()
+	fmt.Println("Layout")
+	for i, w := range result.Windows {
+		dirLabel := "horizontal"
+		if w.RootDirection == domain.DirectionVertical {
+			dirLabel = "vertical"
+		}
+		fmt.Printf("  Window %d: %s (%s split)\n", i+1, w.Name, dirLabel)
+		for _, p := range w.Panes {
+			name := p.Name
+			if name == "" {
+				name = "(unnamed)"
+			}
+			cmd := p.Command
+			if cmd == "" {
+				cmd = "(no command)"
+			}
+			fmt.Printf("    - %s: %s\n", name, cmd)
+		}
+	}
+}
+
+// ConfirmSessionCreation shows a confirmation prompt after the summary.
+func ConfirmSessionCreation() (bool, error) {
+	fmt.Println()
+	return Confirm("Create this session?")
 }
