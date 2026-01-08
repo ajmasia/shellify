@@ -171,7 +171,7 @@ func (s *Server) setupEmbeddedHandler(r *chi.Mux) {
 
 		// Check if file exists in embedded FS
 		if file, err := distFS.Open(path); err == nil {
-			file.Close()
+			_ = file.Close()
 			fileServer.ServeHTTP(w, req)
 			return
 		}
