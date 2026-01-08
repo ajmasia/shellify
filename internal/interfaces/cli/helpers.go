@@ -25,21 +25,21 @@ func printTable(headers []string, rows [][]string) {
 	// Print headers
 	for i, h := range headers {
 		if i > 0 {
-			fmt.Fprint(w, "\t")
+			_, _ = fmt.Fprint(w, "\t")
 		}
-		fmt.Fprint(w, h)
+		_, _ = fmt.Fprint(w, h)
 	}
-	fmt.Fprintln(w)
+	_, _ = fmt.Fprintln(w)
 
 	// Print rows
 	for _, row := range rows {
 		for i, col := range row {
 			if i > 0 {
-				fmt.Fprint(w, "\t")
+				_, _ = fmt.Fprint(w, "\t")
 			}
-			fmt.Fprint(w, col)
+			_, _ = fmt.Fprint(w, col)
 		}
-		fmt.Fprintln(w)
+		_, _ = fmt.Fprintln(w)
 	}
 
 	_ = w.Flush()
