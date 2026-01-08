@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-01-08
+
+### Fixed
+
+- Handle `file.Close` error in embedded GUI handler (errcheck linter)
+
+### Changed
+
+- Restructure CI pipeline to integrate GUI build into Go workflow
+  - Go Lint and Go Test now depend on GUI Build
+  - Go Build uses `-tags embed_gui` with embedded GUI artifact
+
 ## [0.7.0] - 2026-01-08
 
 ### Added
