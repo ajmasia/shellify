@@ -1,0 +1,71 @@
+project_name: shellify
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - main: ./cmd/sfy
+    binary: sfy
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X github.com/ajmasia/shellify/internal/interfaces/cli.Version={{.Version}}
+      - -X github.com/ajmasia/shellify/internal/interfaces/cli.Commit={{.ShortCommit}}
+      - -X github.com/ajmasia/shellify/internal/interfaces/cli.BuildDate={{.Date}}
+
+archives:
+  - format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+nfpms:
+  - package_name: shellify
+    vendor: Antonio Jose Masia
+    homepage: https://github.com/ajmasia/shellify
+    maintainer: Antonio Jose Masia <ajmasia@gmail.com>
+    description: Terminal multiplexer session manager for tmux and zellij
+    license: GPL-3.0
+    formats:
+      - deb
+      - rpm
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  use: github
+  groups:
+    - title: "✨ New Features"
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: "🐛 Bug Fixes"
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: "📚 Documentation"
+      regexp: '^.*?docs(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: "🔧 Maintenance"
+      regexp: '^.*?(chore|refactor)(\([[:word:]]+\))??!?:.+$'
+      order: 3
+    - title: "⚡ Performance"
+      regexp: '^.*?perf(\([[:word:]]+\))??!?:.+$'
+      order: 4
+  filters:
+    exclude:
+      - "^test:"
+      - "^ci:"
+
+release:
+  github:
+    owner: ajmasia
+    name: shellify
+  draft: false
+  prerelease: auto
+  name_template: "v{{ .Version }}"
