@@ -792,3 +792,41 @@ func ConfirmSessionCreation() (bool, error) {
 	fmt.Println()
 	return Confirm("Create this session?")
 }
+
+// SelectMultipleSessions shows an interactive multi-select for sessions.
+func SelectMultipleSessions(options []SessionOption) ([]SessionOption, error) {
+	if len(options) == 0 {
+		return nil, fmt.Errorf("no sessions available")
+	}
+
+	var selected []int
+
+	huhOptions := make([]huh.Option[int], len(options))
+	for i, opt := range options {
+		huhOptions[i] = huh.NewOption(
+			fmt.Sprintf("[%s] %s (%s)", opt.ProjectName, opt.Session.Name, opt.Session.TargetMultiplexer),
+			i,
+		)
+	}
+
+	err := huh.NewMultiSelect[int]().
+		Title("Select sessions (space to select, enter to confirm)").
+		Options(huhOptions...).
+		Value(&selected).
+		WithTheme(theme).
+		Run()
+	if err != nil {
+		return nil, err
+	}
+
+	if len(selected) == 0 {
+		return nil, fmt.Errorf("no sessions selected")
+	}
+
+	result := make([]SessionOption, len(selected))
+	for i, idx := range selected {
+		result[i] = options[idx]
+	}
+
+	return result, nil
+}
