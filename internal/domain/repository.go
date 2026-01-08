@@ -12,3 +12,15 @@ type ProjectRepository interface {
 	ProjectExistsByName(name string) bool
 	CountSessions(projectID string) (int, error)
 }
+
+// SessionRepository defines the interface for session persistence operations.
+type SessionRepository interface {
+	ListSessions(projectID string) ([]SessionMetadata, error)
+	GetSession(projectID, sessionID string) (Session, error)
+	GetSessionByName(projectID, name string) (Session, error)
+	CreateSession(projectID string, session Session) (Session, error)
+	UpdateSession(projectID string, session Session) error
+	DeleteSession(projectID, sessionID string) error
+	SessionExists(projectID, sessionID string) bool
+	SessionExistsByName(projectID, name string) bool
+}
