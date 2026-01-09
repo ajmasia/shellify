@@ -1,0 +1,21 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background: var(--ctp-mantle);
+  border-bottom: 1px solid var(--ctp-surface0);
+}
+
+.group {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.separator {
+  width: 1px;
+  height: 24px;
+  background: var(--ctp-surface1);
+  margin: 0 0.5rem;
+}

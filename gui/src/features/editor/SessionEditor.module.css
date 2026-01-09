@@ -1,0 +1,30 @@
+.editor {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--ctp-base);
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+.content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.preview {
+  flex: 1;
+  padding: 1.5rem;
+  overflow: auto;
+  background: var(--ctp-crust);
+  display: flex;
+  align-items: stretch;
+}

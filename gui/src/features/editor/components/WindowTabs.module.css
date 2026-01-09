@@ -1,0 +1,59 @@
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  background: var(--ctp-mantle);
+  border-bottom: 1px solid var(--ctp-surface0);
+  overflow-x: auto;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--ctp-surface0);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  background: var(--ctp-surface1);
+}
+
+.active {
+  background: var(--ctp-surface1);
+  border-bottom: 2px solid var(--ctp-mauve);
+}
+
+.tabName {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.closeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  padding: 0;
+}
+
+.closeButton:hover {
+  background: var(--ctp-red);
+  color: var(--ctp-base);
+}
+
+.closeButton svg {
+  width: 12px;
+  height: 12px;
+}

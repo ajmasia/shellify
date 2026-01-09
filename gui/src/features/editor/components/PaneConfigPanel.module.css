@@ -1,0 +1,56 @@
+.panel {
+  width: 280px;
+  padding: 1rem;
+  background: var(--ctp-mantle);
+  border-left: 1px solid var(--ctp-surface0);
+  overflow-y: auto;
+}
+
+.empty {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 1rem 0;
+}
+
+.field {
+  margin-bottom: 1rem;
+}
+
+.label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 0.375rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: var(--ctp-surface0);
+  border: 1px solid var(--ctp-surface1);
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
+}
+
+.input:focus {
+  border-color: var(--ctp-mauve);
+  box-shadow: 0 0 0 2px rgba(203, 166, 247, 0.2);
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}

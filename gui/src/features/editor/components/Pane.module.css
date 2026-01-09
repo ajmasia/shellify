@@ -1,0 +1,219 @@
+.pane {
+  position: relative;
+  min-width: 80px;
+  min-height: 60px;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+.leaf {
+  background: var(--ctp-surface1);
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.leaf:hover {
+  border-color: var(--ctp-overlay0);
+}
+
+.selected {
+  border-color: var(--ctp-teal);
+  box-shadow: 0 0 0 1px var(--ctp-teal);
+}
+
+/* Terminal content area */
+.terminal {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 12px;
+  box-sizing: border-box;
+  font-family: var(--font-mono);
+}
+
+/* Pane name badge */
+.paneBadge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 2px 8px;
+  background: var(--ctp-surface0);
+  border-radius: 4px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.selected .paneBadge {
+  background: var(--ctp-teal);
+  color: var(--ctp-base);
+}
+
+/* Prompt line */
+.promptLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.prompt {
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--ctp-teal);
+}
+
+.selected .prompt {
+  color: var(--ctp-green);
+}
+
+.command {
+  font-size: 0.75rem;
+  color: var(--ctp-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Cursor */
+.cursor {
+  width: 10px;
+  height: 2px;
+  background: var(--ctp-teal);
+  animation: blink 1.2s step-end infinite;
+  margin-top: 4px;
+}
+
+.selected .cursor {
+  background: var(--ctp-green);
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Path info */
+.pathInfo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 8px;
+  font-size: 0.625rem;
+  color: var(--ctp-overlay1);
+  overflow: hidden;
+}
+
+.pathInfo svg {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+}
+
+.pathText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Actions overlay */
+.paneActions {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.leaf:hover .paneActions,
+.selected .paneActions {
+  opacity: 1;
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  background: var(--ctp-surface0);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.actionButton:hover {
+  background: var(--ctp-surface2);
+  color: var(--text-primary);
+  transform: scale(1.1);
+}
+
+.actionButton svg {
+  width: 16px;
+  height: 16px;
+}
+
+.deleteButton:hover {
+  background: var(--ctp-red);
+  color: var(--ctp-base);
+}
+
+/* Size indicator (shown during resize) */
+.sizeIndicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 8px 16px;
+  background: var(--ctp-surface0);
+  border-radius: 8px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ctp-text);
+  pointer-events: none;
+  z-index: 20;
+}
+
+/* Resize handles */
+.resizeHandle {
+  position: absolute;
+  z-index: 10;
+}
+
+/* Vertical handle (between horizontal panes) */
+.resizeHandle.vertical {
+  top: 0;
+  right: -16px;
+  width: 16px;
+  height: 100%;
+  cursor: col-resize;
+}
+
+/* Horizontal handle (between vertical panes) */
+.resizeHandle.horizontal {
+  bottom: -16px;
+  left: 0;
+  height: 16px;
+  width: 100%;
+  cursor: row-resize;
+}
