@@ -43,96 +43,26 @@ func runSessionDelete(cmd *cobra.Command, args []string) error {
 	projectSvc := application.NewProjectService(store)
 	sessionSvc := application.NewSessionService(store, store)
 
-	projectFlag, _ := cmd.Flags().GetString("project")
 	force, _ := cmd.Flags().GetBool("force")
 
-	var projectID, sessionID, sessionName, projectName string
+	sessionID, projectID, err := resolveSession(cmd, args, projectSvc, sessionSvc)
+	if err != nil {
+		return err
+	}
 
-	if len(args) == 0 {
-		// Interactive mode: select session from all projects
-		allSessions, err := sessionSvc.ListAllSessions()
-		if err != nil {
-			return err
-		}
-
-		if len(allSessions) == 0 {
-			return fmt.Errorf("no sessions found")
-		}
-
-		options := make([]tui.SessionOption, len(allSessions))
-		for i, s := range allSessions {
-			options[i] = tui.SessionOption{
-				SessionID:   s.Session.ID,
-				ProjectID:   s.ProjectID,
-				ProjectName: s.ProjectName,
-				Session:     s.Session,
-			}
-		}
-
-		sessionID, projectID, err = tui.SelectSessionFromAll(options)
-		if err != nil {
-			return err
-		}
-
-		// Find the selected session info
-		for _, opt := range options {
-			if opt.SessionID == sessionID {
-				sessionName = opt.Session.Name
-				projectName = opt.ProjectName
-				break
-			}
-		}
-	} else {
-		sessionID = args[0]
-
-		if projectFlag != "" {
-			project, err := projectSvc.GetProject(projectFlag)
-			if err != nil {
-				return err
-			}
-			projectID = project.ID
-			projectName = project.Name
-		} else {
-			// Try to find the session across all projects
-			allSessions, err := sessionSvc.ListAllSessions()
-			if err != nil {
-				return err
-			}
-
-			var matches []application.SessionWithProject
-			for _, s := range allSessions {
-				if s.Session.ID == sessionID || s.Session.Name == sessionID {
-					matches = append(matches, s)
-				}
-			}
-
-			if len(matches) == 0 {
-				return fmt.Errorf("session not found: %s", sessionID)
-			}
-
-			if len(matches) > 1 {
-				return fmt.Errorf("multiple sessions found with name '%s'. Use -p to specify project", sessionID)
-			}
-
-			projectID = matches[0].ProjectID
-			projectName = matches[0].ProjectName
-			sessionID = matches[0].Session.ID
-			sessionName = matches[0].Session.Name
-		}
-
-		// Get session name if not already set
-		if sessionName == "" {
-			session, err := sessionSvc.GetSession(projectID, sessionID)
-			if err != nil {
-				return err
-			}
-			sessionName = session.Name
-		}
+	// Get session and project details for confirmation message
+	session, err := sessionSvc.GetSession(projectID, sessionID)
+	if err != nil {
+		return err
+	}
+	project, err := projectSvc.GetProject(projectID)
+	if err != nil {
+		return err
 	}
 
 	// Confirmation prompt unless --force is used
 	if !force {
-		message := fmt.Sprintf("Delete session '%s' from project '%s'?", sessionName, projectName)
+		message := fmt.Sprintf("Delete session '%s' from project '%s'?", session.Name, project.Name)
 
 		confirmed, err := tui.Confirm(message)
 		if err != nil {
@@ -153,11 +83,11 @@ func runSessionDelete(cmd *cobra.Command, args []string) error {
 	if jsonOutput {
 		return printJSON(map[string]any{
 			"deleted": sessionID,
-			"name":    sessionName,
-			"project": projectName,
+			"name":    session.Name,
+			"project": project.Name,
 		})
 	}
 
-	fmt.Printf("Deleted session: %s (from %s)\n", sessionName, projectName)
+	fmt.Printf("Deleted session: %s (from %s)\n", session.Name, project.Name)
 	return nil
 }

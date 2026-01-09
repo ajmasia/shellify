@@ -59,12 +59,19 @@ func openGUIForSessionEdit(cmd *cobra.Command, args []string) error {
 	}
 
 	// Ensure server is running
-	if err := ensureServerRunning(); err != nil {
+	started, err := ensureServerRunning()
+	if err != nil {
 		return err
 	}
 
+	if started {
+		fmt.Println("Server started at http://localhost:3777")
+		fmt.Println("Use 'sfy server stop' when done")
+		fmt.Println()
+	}
+
 	url := fmt.Sprintf("http://localhost:3777/sessions/%s/edit", sessionID)
-	fmt.Printf("Opening GUI editor: %s\n", url)
+	fmt.Printf("Opening: %s\n", url)
 	openURL(url)
 
 	return nil
@@ -130,72 +137,4 @@ func openAdvancedEdit(cmd *cobra.Command, args []string) error {
 
 	fmt.Println("Session file saved.")
 	return nil
-}
-
-func resolveSession(cmd *cobra.Command, args []string, projectSvc *application.ProjectService, sessionSvc *application.SessionService) (sessionID, projectID string, err error) {
-	projectFlag, _ := cmd.Flags().GetString("project")
-
-	if len(args) == 0 {
-		// Interactive mode: select session from all projects
-		allSessions, err := sessionSvc.ListAllSessions()
-		if err != nil {
-			return "", "", err
-		}
-
-		if len(allSessions) == 0 {
-			return "", "", fmt.Errorf("no sessions found")
-		}
-
-		options := make([]tui.SessionOption, len(allSessions))
-		for i, s := range allSessions {
-			options[i] = tui.SessionOption{
-				SessionID:   s.Session.ID,
-				ProjectID:   s.ProjectID,
-				ProjectName: s.ProjectName,
-				Session:     s.Session,
-			}
-		}
-
-		sessionID, projectID, err = tui.SelectSessionFromAll(options)
-		if err != nil {
-			return "", "", err
-		}
-		return sessionID, projectID, nil
-	}
-
-	sessionID = args[0]
-
-	if projectFlag != "" {
-		project, err := projectSvc.GetProject(projectFlag)
-		if err != nil {
-			return "", "", err
-		}
-		projectID = project.ID
-	} else {
-		// Try to find the session across all projects
-		allSessions, err := sessionSvc.ListAllSessions()
-		if err != nil {
-			return "", "", err
-		}
-
-		var matches []application.SessionWithProject
-		for _, s := range allSessions {
-			if s.Session.ID == sessionID || s.Session.Name == sessionID {
-				matches = append(matches, s)
-			}
-		}
-
-		if len(matches) == 0 {
-			return "", "", fmt.Errorf("session not found: %s", sessionID)
-		}
-
-		if len(matches) > 1 {
-			return "", "", fmt.Errorf("multiple sessions found with name '%s'. Use -p to specify project", sessionID)
-		}
-
-		projectID = matches[0].ProjectID
-		sessionID = matches[0].Session.ID
-	}
-
-	return sessionID, projectID, nil
 }

@@ -176,8 +176,15 @@ func openGUIForSessionCreate(cmd *cobra.Command) error {
 	projectFlag, _ := cmd.Flags().GetString("project")
 
 	// Ensure server is running
-	if err := ensureServerRunning(); err != nil {
+	started, err := ensureServerRunning()
+	if err != nil {
 		return err
+	}
+
+	if started {
+		fmt.Println("Server started at http://localhost:3777")
+		fmt.Println("Use 'sfy server stop' when done")
+		fmt.Println()
 	}
 
 	// Build URL
@@ -196,7 +203,7 @@ func openGUIForSessionCreate(cmd *cobra.Command) error {
 		url = fmt.Sprintf("http://localhost:3777/projects/%s", project.ID)
 	}
 
-	fmt.Printf("Opening GUI: %s\n", url)
+	fmt.Printf("Opening: %s\n", url)
 	openURL(url)
 	return nil
 }

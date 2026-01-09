@@ -7,7 +7,6 @@ import (
 
 	"github.com/ajmasia/shellify/internal/application"
 	"github.com/ajmasia/shellify/internal/infrastructure/storage"
-	"github.com/ajmasia/shellify/internal/interfaces/tui"
 )
 
 var sessionStatusCmd = &cobra.Command{
@@ -47,70 +46,11 @@ func runSessionStatus(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	projectFlag, _ := cmd.Flags().GetString("project")
 	jsonOutput, _ := cmd.Flags().GetBool("json")
 
-	var projectID, sessionID string
-
-	if len(args) == 0 {
-		// Interactive mode: select session from all projects
-		allSessions, err := sessionSvc.ListAllSessions()
-		if err != nil {
-			return err
-		}
-
-		if len(allSessions) == 0 {
-			return fmt.Errorf("no sessions found")
-		}
-
-		options := make([]tui.SessionOption, len(allSessions))
-		for i, s := range allSessions {
-			options[i] = tui.SessionOption{
-				SessionID:   s.Session.ID,
-				ProjectID:   s.ProjectID,
-				ProjectName: s.ProjectName,
-				Session:     s.Session,
-			}
-		}
-
-		sessionID, projectID, err = tui.SelectSessionFromAll(options)
-		if err != nil {
-			return err
-		}
-	} else {
-		sessionID = args[0]
-
-		if projectFlag != "" {
-			project, err := projectSvc.GetProject(projectFlag)
-			if err != nil {
-				return err
-			}
-			projectID = project.ID
-		} else {
-			// Try to find the session across all projects
-			allSessions, err := sessionSvc.ListAllSessions()
-			if err != nil {
-				return err
-			}
-
-			var matches []application.SessionWithProject
-			for _, s := range allSessions {
-				if s.Session.ID == sessionID || s.Session.Name == sessionID {
-					matches = append(matches, s)
-				}
-			}
-
-			if len(matches) == 0 {
-				return fmt.Errorf("session not found: %s", sessionID)
-			}
-
-			if len(matches) > 1 {
-				return fmt.Errorf("multiple sessions found with name '%s'. Use -p to specify project", sessionID)
-			}
-
-			projectID = matches[0].ProjectID
-			sessionID = matches[0].Session.ID
-		}
+	sessionID, projectID, err := resolveSession(cmd, args, projectSvc, sessionSvc)
+	if err != nil {
+		return err
 	}
 
 	status, err := launcherSvc.GetSessionStatus(projectID, sessionID)

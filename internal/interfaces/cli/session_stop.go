@@ -56,12 +56,36 @@ func runSessionStop(cmd *cobra.Command, args []string) error {
 
 	if len(args) == 0 {
 		// Interactive mode: select from running sessions
-		allSessions, err := sessionSvc.ListAllSessions()
-		if err != nil {
-			return err
+		var allSessions []application.SessionWithProject
+
+		if projectFlag != "" {
+			// Filter by project
+			project, err := projectSvc.GetProject(projectFlag)
+			if err != nil {
+				return err
+			}
+			sessions, err := sessionSvc.ListSessions(project.ID)
+			if err != nil {
+				return err
+			}
+			for _, s := range sessions {
+				allSessions = append(allSessions, application.SessionWithProject{
+					Session:     s,
+					ProjectID:   project.ID,
+					ProjectName: project.Name,
+				})
+			}
+		} else {
+			allSessions, err = sessionSvc.ListAllSessions()
+			if err != nil {
+				return err
+			}
 		}
 
 		if len(allSessions) == 0 {
+			if projectFlag != "" {
+				return fmt.Errorf("no sessions found in project '%s'", projectFlag)
+			}
 			return fmt.Errorf("no sessions found")
 		}
 
@@ -88,6 +112,9 @@ func runSessionStop(cmd *cobra.Command, args []string) error {
 		}
 
 		if len(runningOptions) == 0 {
+			if projectFlag != "" {
+				return fmt.Errorf("no running sessions found in project '%s'", projectFlag)
+			}
 			return fmt.Errorf("no running sessions found")
 		}
 
@@ -96,38 +123,9 @@ func runSessionStop(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	} else {
-		sessionID = args[0]
-
-		if projectFlag != "" {
-			project, err := projectSvc.GetProject(projectFlag)
-			if err != nil {
-				return err
-			}
-			projectID = project.ID
-		} else {
-			// Try to find the session across all projects
-			allSessions, err := sessionSvc.ListAllSessions()
-			if err != nil {
-				return err
-			}
-
-			var matches []application.SessionWithProject
-			for _, s := range allSessions {
-				if s.Session.ID == sessionID || s.Session.Name == sessionID {
-					matches = append(matches, s)
-				}
-			}
-
-			if len(matches) == 0 {
-				return fmt.Errorf("session not found: %s", sessionID)
-			}
-
-			if len(matches) > 1 {
-				return fmt.Errorf("multiple sessions found with name '%s'. Use -p to specify project", sessionID)
-			}
-
-			projectID = matches[0].ProjectID
-			sessionID = matches[0].Session.ID
+		sessionID, projectID, err = resolveSession(cmd, args, projectSvc, sessionSvc)
+		if err != nil {
+			return err
 		}
 	}
 
