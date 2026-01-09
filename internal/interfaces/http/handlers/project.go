@@ -270,7 +270,7 @@ func convertPanes(panes []domain.Pane) []application.PaneInput {
 			WorkingDirectory: p.WorkingDirectory,
 			Command:          p.Command,
 			Size:             p.Size,
-			Direction:        string(p.Direction),
+			Direction:        p.Direction,
 		}
 	}
 	return result
