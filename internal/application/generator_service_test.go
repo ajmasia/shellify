@@ -100,7 +100,7 @@ func TestGeneratorService_GenerateSession_Zellij(t *testing.T) {
 	result, err := service.GenerateSession(project.ID, session.ID)
 	require.NoError(t, err)
 
-	assert.Equal(t, ".kdl", result.FileExtension)
+	assert.Equal(t, ".sh", result.FileExtension)
 	assert.Equal(t, "zellij", result.Multiplexer)
 	assert.Contains(t, result.Content, "layout {")
 }
@@ -206,7 +206,7 @@ func TestGeneratorService_GenerateSessionToFile_Zellij(t *testing.T) {
 	sessionRepo.sessions[project.ID][session.ID] = session
 
 	tmpDir := t.TempDir()
-	outputPath := filepath.Join(tmpDir, "output", "test.kdl")
+	outputPath := filepath.Join(tmpDir, "output", "test.sh")
 	resultPath, err := service.GenerateSessionToFile(project.ID, session.ID, outputPath)
 	require.NoError(t, err)
 
@@ -217,8 +217,8 @@ func TestGeneratorService_GenerateSessionToFile_Zellij(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, string(content), "layout {")
 
-	// KDL files should NOT be executable
+	// Shell files should be executable (zellij now uses .sh wrapper)
 	info, err := os.Stat(outputPath)
 	require.NoError(t, err)
-	assert.True(t, info.Mode()&0100 == 0, "kdl file should not be executable")
+	assert.True(t, info.Mode()&0100 != 0, "sh file should be executable")
 }
