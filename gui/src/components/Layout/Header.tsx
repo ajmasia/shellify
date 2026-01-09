@@ -24,8 +24,8 @@ export const Header = observer(function Header() {
       <div className={styles.left}>
         {!isHome && (
           <Tooltip content="Back to projects">
-            <IconButton aria-label="Back" onClick={handleBack}>
-              <BackIcon size={20} />
+            <IconButton aria-label="Back" onClick={handleBack} variant="ghost">
+              <BackIcon />
             </IconButton>
           </Tooltip>
         )}

@@ -34,6 +34,9 @@ export const TerminalMonitor = observer(function TerminalMonitor({
       <div className={styles.windowBar}>
         <WindowTabs />
         <div className={styles.windowBarRight}>
+          <Chip variant={store.session.targetMultiplexer as 'tmux' | 'zellij'}>
+            {store.session.targetMultiplexer}
+          </Chip>
           <Chip>{displayName}</Chip>
           <Tooltip content="Session settings">
             <button className={styles.settingsButton} onClick={onSettingsClick}>
