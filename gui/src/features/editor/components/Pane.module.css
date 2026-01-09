@@ -58,15 +58,16 @@
 /* Prompt line */
 .promptLine {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 8px;
   margin-bottom: 8px;
 }
 
 .prompt {
-  font-size: 1rem;
+  font-size: 0.875rem;
   font-weight: bold;
   color: var(--ctp-teal);
+  line-height: 1.4;
 }
 
 .selected .prompt {
@@ -74,34 +75,12 @@
 }
 
 .command {
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   color: var(--ctp-text);
+  line-height: 1.4;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-/* Cursor */
-.cursor {
-  width: 10px;
-  height: 2px;
-  background: var(--ctp-teal);
-  animation: blink 1.2s step-end infinite;
-  margin-top: 4px;
-}
-
-.selected .cursor {
-  background: var(--ctp-green);
-}
-
-@keyframes blink {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0;
-  }
 }
 
 /* Path info */
@@ -141,7 +120,7 @@
 }
 
 .leaf:hover .paneActions,
-.selected .paneActions {
+.paneActions.actionsVisible {
   opacity: 1;
 }
 
@@ -176,6 +155,13 @@
 .deleteButton:hover {
   background: var(--ctp-red);
   color: var(--ctp-base);
+}
+
+.actionButton.editActive,
+.actionButton.editActive:hover {
+  background: var(--ctp-teal);
+  color: var(--ctp-base);
+  transform: none;
 }
 
 /* Size indicator (shown during resize) */

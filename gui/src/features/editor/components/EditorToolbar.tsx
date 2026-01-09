@@ -1,9 +1,12 @@
+import { useState } from 'react'
 import { observer } from 'mobx-react-lite'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useSessionEditor } from '../hooks/useSessionEditor'
 import { IconButton } from '@/components/IconButton'
 import { Tooltip } from '@/components/Tooltip'
+import { BaseModal } from '@/components/Modal/BaseModal'
+import { Button } from '@/components/Button'
 import {
   BackIcon,
   NewWindowIcon,
@@ -30,13 +33,28 @@ export const EditorToolbar = observer(function EditorToolbar({
 }: EditorToolbarProps) {
   const store = useSessionEditor()
   const navigate = useNavigate()
+  const [showUnsavedModal, setShowUnsavedModal] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
-  const handleBack = () => {
+  const navigateBack = () => {
     if (projectId) {
       navigate(`/projects/${projectId}`)
     } else {
       navigate('/')
     }
+  }
+
+  const handleBack = () => {
+    if (store.isDirty) {
+      setShowUnsavedModal(true)
+    } else {
+      navigateBack()
+    }
+  }
+
+  const handleDiscard = () => {
+    setShowUnsavedModal(false)
+    navigateBack()
   }
 
   const handleAddWindow = () => {
@@ -64,38 +82,45 @@ export const EditorToolbar = observer(function EditorToolbar({
   const handleSave = async () => {
     const session = store.toJSON()
 
-    // Flatten recursive pane tree to flat array for API
+    // Convert pane tree to API format (preserving tree structure)
     type PaneApiFormat = {
+      id?: string
       name?: string
       command?: string
       workingDirectory?: string
       size?: number
+      direction?: 'horizontal' | 'vertical'
+      children?: PaneApiFormat[]
     }
-    function flattenPanes(panes: (typeof session.windows)[0]['panes']): PaneApiFormat[] {
-      const result: PaneApiFormat[] = []
 
-      function traverse(pane: (typeof panes)[0]) {
-        if (pane.children && pane.children.length > 0) {
-          pane.children.forEach(traverse)
-        } else {
-          result.push({
-            name: pane.name || undefined,
-            command: pane.command || undefined,
-            workingDirectory: pane.workingDirectory,
-            size: pane.size,
-          })
+    function convertPanesToApi(panes: (typeof session.windows)[0]['panes']): PaneApiFormat[] {
+      return panes.map((pane) => {
+        const apiPane: PaneApiFormat = {
+          id: pane.id,
+          name: pane.name || undefined,
+          command: pane.command || undefined,
+          workingDirectory: pane.workingDirectory || undefined,
+          size: pane.size,
         }
-      }
 
-      panes.forEach(traverse)
-      return result
+        if (pane.direction) {
+          apiPane.direction = pane.direction
+        }
+
+        if (pane.children && pane.children.length > 0) {
+          apiPane.children = convertPanesToApi(pane.children)
+        }
+
+        return apiPane
+      })
     }
 
     // Convert editor windows to API format
     const windowsForApi = session.windows.map((w) => ({
       name: w.name,
       workingDirectory: w.workingDirectory,
-      panes: flattenPanes(w.panes),
+      rootDirection: w.rootDirection,
+      panes: convertPanesToApi(w.panes),
     }))
 
     try {
@@ -135,71 +160,104 @@ export const EditorToolbar = observer(function EditorToolbar({
     }
   }
 
+  const handleSaveAndExit = async () => {
+    setIsSaving(true)
+    await handleSave()
+    setIsSaving(false)
+    setShowUnsavedModal(false)
+    navigateBack()
+  }
+
   return (
-    <div className={styles.toolbar}>
-      <div className={styles.group}>
-        <Tooltip content="Back">
-          <IconButton onClick={handleBack} variant="ghost">
-            <BackIcon />
-          </IconButton>
-        </Tooltip>
+    <>
+      <div className={styles.toolbar}>
+        <div className={styles.group}>
+          <Tooltip content="Back">
+            <IconButton onClick={handleBack} variant="ghost">
+              <BackIcon />
+            </IconButton>
+          </Tooltip>
 
-        <div className={styles.separator} />
+          <span className={styles.sessionName}>{store.session.name || 'New Session'}</span>
 
-        <Tooltip content="Add window">
-          <IconButton onClick={handleAddWindow} variant="ghost">
-            <NewWindowIcon />
-          </IconButton>
-        </Tooltip>
+          <div className={styles.spacer} />
 
-        <Tooltip content="Split vertical">
-          <IconButton
-            onClick={handleSplitVertical}
-            variant="ghost"
-            disabled={!store.selectedPaneId}
-          >
-            <SplitVerticalIcon />
-          </IconButton>
-        </Tooltip>
+          <Tooltip content="Add window">
+            <IconButton onClick={handleAddWindow} variant="ghost">
+              <NewWindowIcon />
+            </IconButton>
+          </Tooltip>
 
-        <Tooltip content="Split horizontal">
-          <IconButton
-            onClick={handleSplitHorizontal}
-            variant="ghost"
-            disabled={!store.selectedPaneId}
-          >
-            <SplitHorizontalIcon />
-          </IconButton>
-        </Tooltip>
+          <Tooltip content="Split vertical">
+            <IconButton
+              onClick={handleSplitVertical}
+              variant="ghost"
+              disabled={!store.selectedPaneId}
+            >
+              <SplitVerticalIcon />
+            </IconButton>
+          </Tooltip>
 
-        <Tooltip content="Delete pane">
-          <IconButton onClick={handleDelete} variant="ghost" disabled={!store.selectedPaneId}>
-            <DeleteIcon />
-          </IconButton>
-        </Tooltip>
+          <Tooltip content="Split horizontal">
+            <IconButton
+              onClick={handleSplitHorizontal}
+              variant="ghost"
+              disabled={!store.selectedPaneId}
+            >
+              <SplitHorizontalIcon />
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip content="Delete pane">
+            <IconButton onClick={handleDelete} variant="ghost" disabled={!store.selectedPaneId}>
+              <DeleteIcon />
+            </IconButton>
+          </Tooltip>
+        </div>
+
+        <div className={styles.group}>
+          <Tooltip content="Undo">
+            <IconButton onClick={() => store.undo()} variant="ghost" disabled={!store.canUndo}>
+              <UndoIcon />
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip content="Redo">
+            <IconButton onClick={() => store.redo()} variant="ghost" disabled={!store.canRedo}>
+              <RedoIcon />
+            </IconButton>
+          </Tooltip>
+
+          <div className={styles.spacer} />
+
+          <Tooltip content="Save">
+            <IconButton onClick={handleSave} variant="primary">
+              <SaveIcon />
+            </IconButton>
+          </Tooltip>
+        </div>
       </div>
 
-      <div className={styles.group}>
-        <Tooltip content="Undo">
-          <IconButton onClick={() => store.undo()} variant="ghost" disabled={!store.canUndo}>
-            <UndoIcon />
-          </IconButton>
-        </Tooltip>
-
-        <Tooltip content="Redo">
-          <IconButton onClick={() => store.redo()} variant="ghost" disabled={!store.canRedo}>
-            <RedoIcon />
-          </IconButton>
-        </Tooltip>
-
-        <div className={styles.separator} />
-
-        <Tooltip content="Save">
-          <IconButton onClick={handleSave} variant="primary">
-            <SaveIcon />
-          </IconButton>
-        </Tooltip>
-      </div>
-    </div>
+      <BaseModal
+        isOpen={showUnsavedModal}
+        onClose={() => setShowUnsavedModal(false)}
+        title="Unsaved Changes"
+      >
+        <p className={styles.message}>
+          You have unsaved changes. Would you like to save before leaving?
+        </p>
+        <div className={styles.modalFooter}>
+          <Button variant="ghost" onClick={() => setShowUnsavedModal(false)} disabled={isSaving}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={handleDiscard} disabled={isSaving}>
+            Discard
+          </Button>
+          <Button variant="primary" onClick={handleSaveAndExit} disabled={isSaving}>
+            {isSaving ? 'Saving...' : 'Save'}
+          </Button>
+        </div>
+      </BaseModal>
+    </>
   )
 })

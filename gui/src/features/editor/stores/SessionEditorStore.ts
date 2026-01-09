@@ -125,6 +125,7 @@ export class SessionEditorStore {
         | 'environment'
         | 'preCommands'
         | 'postCommands'
+        | 'defaultWindowId'
       >
     >
   ): void {

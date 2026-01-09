@@ -1,8 +1,9 @@
-import { useRef, useCallback } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { observer } from 'mobx-react-lite'
 import type { EditorPane, Direction } from '../types'
 import { useSessionEditor } from '../hooks/useSessionEditor'
 import { PaneGrid } from './PaneGrid'
+import { PaneEditDropdown } from './PaneEditDropdown'
 import { FolderIcon, DeleteIcon, EditIcon } from '@/components/Icons'
 import { Tooltip } from '@/components/Tooltip'
 import styles from './Pane.module.css'
@@ -18,6 +19,7 @@ export const Pane = observer(function Pane({ pane, direction, isLast }: PaneProp
   const paneRef = useRef<HTMLDivElement>(null)
   const resizeHandleRef = useRef<HTMLDivElement>(null)
   const isResizingRef = useRef(false)
+  const [isEditing, setIsEditing] = useState(false)
 
   const isSelected = store.selectedPaneId === pane.id
   const hasChildren = pane.children && pane.children.length > 0
@@ -32,6 +34,12 @@ export const Pane = observer(function Pane({ pane, direction, isLast }: PaneProp
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation()
     store.removePane(pane.id)
+  }
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    store.selectPane(pane.id)
+    setIsEditing(true)
   }
 
   const handleMouseDown = useCallback(
@@ -104,9 +112,6 @@ export const Pane = observer(function Pane({ pane, direction, isLast }: PaneProp
               {pane.command && <span className={styles.command}>{pane.command}</span>}
             </div>
 
-            {/* Blinking cursor */}
-            {isSelected && <div className={styles.cursor} />}
-
             {/* Path info */}
             {pane.workingDirectory && (
               <div className={styles.pathInfo}>
@@ -122,10 +127,16 @@ export const Pane = observer(function Pane({ pane, direction, isLast }: PaneProp
           {/* Resize percentage indicator */}
           {store.isResizing && <div className={styles.sizeIndicator}>{Math.round(pane.size)}%</div>}
 
+          {/* Edit dropdown */}
+          {isEditing && <PaneEditDropdown pane={pane} onClose={() => setIsEditing(false)} />}
+
           {/* Actions */}
-          <div className={styles.paneActions}>
+          <div className={`${styles.paneActions} ${isEditing ? styles.actionsVisible : ''}`}>
             <Tooltip content="Edit pane">
-              <button className={styles.actionButton}>
+              <button
+                className={`${styles.actionButton} ${isEditing ? styles.editActive : ''}`}
+                onClick={handleEdit}
+              >
                 <EditIcon />
               </button>
             </Tooltip>

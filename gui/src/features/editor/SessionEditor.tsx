@@ -7,8 +7,8 @@ import { SessionEditorProvider } from './stores/SessionEditorProvider'
 import { useSessionEditor } from './hooks/useSessionEditor'
 import { EditorToolbar } from './components/EditorToolbar'
 import { PaneGrid } from './components/PaneGrid'
-import { PaneConfigPanel } from './components/PaneConfigPanel'
 import { TerminalMonitor } from './components/TerminalMonitor'
+import { SessionSettingsModal } from './components/SessionSettingsModal'
 import type { EditorSession } from './types'
 import type { MultiplexerType } from '@/domain'
 import styles from './SessionEditor.module.css'
@@ -20,6 +20,7 @@ function SessionEditorContent() {
   const store = useSessionEditor()
   const [isLoading, setIsLoading] = useState(true)
   const [loadedProjectId, setLoadedProjectId] = useState<string | undefined>()
+  const [showSettings, setShowSettings] = useState(false)
 
   const isNew = sessionId === 'new'
   const projectIdFromParams = searchParams.get('projectId') ?? undefined
@@ -29,6 +30,8 @@ function SessionEditorContent() {
   useEffect(() => {
     const loadSession = async () => {
       setIsLoading(true)
+      const startTime = Date.now()
+
       try {
         if (isNew) {
           store.resetSession(multiplexer)
@@ -36,6 +39,13 @@ function SessionEditorContent() {
           const result = await api.sessions.get(sessionId)
           setLoadedProjectId(result.projectId)
           store.loadSession(result.session as unknown as EditorSession)
+        }
+
+        // Ensure minimum loading time for smooth UX
+        const elapsed = Date.now() - startTime
+        const minLoadTime = 500
+        if (elapsed < minLoadTime) {
+          await new Promise((resolve) => setTimeout(resolve, minLoadTime - elapsed))
         }
       } catch {
         toast.error('Failed to load session')
@@ -46,7 +56,7 @@ function SessionEditorContent() {
     }
 
     loadSession()
-  }, [sessionId, isNew, multiplexer, store, navigate])
+  }, [sessionId, isNew, multiplexer, projectIdFromParams, store, navigate])
 
   // Keyboard shortcuts for undo/redo
   useEffect(() => {
@@ -69,7 +79,10 @@ function SessionEditorContent() {
   if (isLoading) {
     return (
       <div className={styles.editor}>
-        <div className={styles.loading}>Loading session...</div>
+        <div className={styles.loading}>
+          <div className={styles.spinner} />
+          <span className={styles.loadingText}>Loading session...</span>
+        </div>
       </div>
     )
   }
@@ -84,15 +97,14 @@ function SessionEditorContent() {
         isNew={isNew}
       />
       <div className={styles.content}>
-        <div className={styles.preview}>
-          <TerminalMonitor>
-            {currentWindow && (
-              <PaneGrid panes={currentWindow.panes} direction={currentWindow.rootDirection} />
-            )}
-          </TerminalMonitor>
-        </div>
-        <PaneConfigPanel />
+        <TerminalMonitor onSettingsClick={() => setShowSettings(true)}>
+          {currentWindow && (
+            <PaneGrid panes={currentWindow.panes} direction={currentWindow.rootDirection} />
+          )}
+        </TerminalMonitor>
       </div>
+
+      <SessionSettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </div>
   )
 }

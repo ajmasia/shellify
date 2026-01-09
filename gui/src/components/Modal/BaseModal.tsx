@@ -5,7 +5,7 @@ import { CloseIcon } from '@/components/Icons'
 import type { BaseModalProps } from './types'
 import styles from './Modal.module.css'
 
-export function BaseModal({ isOpen, onClose, title, children }: BaseModalProps) {
+export function BaseModal({ isOpen, onClose, title, children, className }: BaseModalProps) {
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -29,7 +29,7 @@ export function BaseModal({ isOpen, onClose, title, children }: BaseModalProps) 
   return (
     <ModalPortal>
       <div className={styles.backdrop} onClick={onClose}>
-        <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div className={`${styles.modal} ${className ?? ''}`} onClick={(e) => e.stopPropagation()}>
           <div className={styles.header}>
             <h2 className={styles.title}>{title}</h2>
             <IconButton aria-label="Close modal" onClick={onClose} className={styles.closeButton}>

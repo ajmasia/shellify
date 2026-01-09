@@ -5,6 +5,7 @@ export interface BaseModalProps {
   onClose: () => void
   title: string
   children: ReactNode
+  className?: string
 }
 
 export interface ConfirmModalProps {
