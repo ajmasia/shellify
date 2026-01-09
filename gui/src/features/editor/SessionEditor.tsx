@@ -6,7 +6,6 @@ import { api } from '@/api'
 import { SessionEditorProvider } from './stores/SessionEditorProvider'
 import { useSessionEditor } from './hooks/useSessionEditor'
 import { EditorToolbar } from './components/EditorToolbar'
-import { WindowTabs } from './components/WindowTabs'
 import { PaneGrid } from './components/PaneGrid'
 import { PaneConfigPanel } from './components/PaneConfigPanel'
 import { TerminalMonitor } from './components/TerminalMonitor'
@@ -84,7 +83,6 @@ function SessionEditorContent() {
         projectId={projectId}
         isNew={isNew}
       />
-      <WindowTabs />
       <div className={styles.content}>
         <div className={styles.preview}>
           <TerminalMonitor>

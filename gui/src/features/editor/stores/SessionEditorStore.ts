@@ -173,6 +173,18 @@ export class SessionEditorStore {
     }
   }
 
+  reorderWindows(draggedId: string, targetId: string): void {
+    const windows = this.session.windows
+    const draggedIndex = windows.findIndex((w) => w.id === draggedId)
+    const targetIndex = windows.findIndex((w) => w.id === targetId)
+
+    if (draggedIndex !== -1 && targetIndex !== -1) {
+      const [dragged] = windows.splice(draggedIndex, 1)
+      windows.splice(targetIndex, 0, dragged)
+      this.saveSnapshot()
+    }
+  }
+
   selectWindow(windowId: string): void {
     const window = this.session.windows.find((w) => w.id === windowId)
     if (window) {

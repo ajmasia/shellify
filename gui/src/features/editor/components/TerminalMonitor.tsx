@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { WindowTabs } from './WindowTabs'
 import styles from './TerminalMonitor.module.css'
 
 interface TerminalMonitorProps {
@@ -17,6 +18,7 @@ export function TerminalMonitor({ children }: TerminalMonitorProps) {
         <span className={styles.titleText}>Session Preview</span>
         <div className={styles.spacer} />
       </div>
+      <WindowTabs />
       <div className={styles.screen}>{children}</div>
     </div>
   )
