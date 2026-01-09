@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-01-09
+
+### Added
+
+- Shell completion for project and session names
+  - Dynamic completion for `-p` flag (project selection)
+  - Session name completion filtered by project when `-p` is provided
+- Initial project documentation
+  - Comprehensive README with badges, installation, usage, and configuration
+  - CONTRIBUTING.md with contribution guidelines
+  - RELEASING.md with release process documentation
+  - Project logo in assets/
+
+### Fixed
+
+- `-p` flag now properly filters sessions by project in interactive mode
+- `--gui` flag shows server messages only when actually starting the server
+- Window tabs UX: tabs now fit text width and expand on hover to reveal delete icon
+
 ## [0.8.0] - 2026-01-09
 
 ### Added
