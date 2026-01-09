@@ -74,3 +74,15 @@ export interface PaneInput {
   workingDirectory?: string
   size?: number
 }
+
+export interface UpdateSessionRequest {
+  name?: string
+  description?: string
+  workingDirectory?: string
+  targetMultiplexer?: MultiplexerType
+  environment?: Record<string, string>
+  preCommands?: string[]
+  postCommands?: string[]
+  windows?: WindowInput[]
+  defaultWindowId?: string
+}
