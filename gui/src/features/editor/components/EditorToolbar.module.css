@@ -23,6 +23,11 @@
   margin-left: 0.5rem;
 }
 
+.projectName {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
 .message {
   color: var(--text-secondary);
   font-size: 0.9375rem;

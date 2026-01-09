@@ -20,6 +20,7 @@ function SessionEditorContent() {
   const store = useSessionEditor()
   const [isLoading, setIsLoading] = useState(true)
   const [loadedProjectId, setLoadedProjectId] = useState<string | undefined>()
+  const [projectName, setProjectName] = useState<string | undefined>()
   const [showSettings, setShowSettings] = useState(false)
 
   const isNew = sessionId === 'new'
@@ -33,12 +34,21 @@ function SessionEditorContent() {
       const startTime = Date.now()
 
       try {
+        let currentProjectId = projectIdFromParams
+
         if (isNew) {
           store.resetSession(multiplexer)
         } else if (sessionId) {
           const result = await api.sessions.get(sessionId)
           setLoadedProjectId(result.projectId)
+          currentProjectId = result.projectId
           store.loadSession(result.session as unknown as EditorSession)
+        }
+
+        // Fetch project name
+        if (currentProjectId) {
+          const project = await api.projects.get(currentProjectId)
+          setProjectName(project.name)
         }
 
         // Ensure minimum loading time for smooth UX
@@ -94,6 +104,7 @@ function SessionEditorContent() {
       <EditorToolbar
         sessionId={isNew ? undefined : sessionId}
         projectId={projectId}
+        projectName={projectName}
         isNew={isNew}
       />
       <div className={styles.content}>

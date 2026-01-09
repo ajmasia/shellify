@@ -23,12 +23,14 @@ import styles from './EditorToolbar.module.css'
 interface EditorToolbarProps {
   sessionId?: string
   projectId?: string
+  projectName?: string
   isNew?: boolean
 }
 
 export const EditorToolbar = observer(function EditorToolbar({
   sessionId,
   projectId,
+  projectName,
   isNew,
 }: EditorToolbarProps) {
   const store = useSessionEditor()
@@ -178,7 +180,10 @@ export const EditorToolbar = observer(function EditorToolbar({
             </IconButton>
           </Tooltip>
 
-          <span className={styles.sessionName}>{store.session.name || 'New Session'}</span>
+          <span className={styles.sessionName}>
+            {projectName && <span className={styles.projectName}>{projectName}: </span>}
+            {store.session.name || 'New Session'}
+          </span>
 
           <div className={styles.spacer} />
 

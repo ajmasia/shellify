@@ -4,10 +4,18 @@ const FAVICON_LIGHT = '/shellify-light.svg'
 const FAVICON_DARK = '/shellify-dark.svg'
 
 function setFavicon(href: string): void {
-  const link = document.querySelector<HTMLLinkElement>("link[rel*='icon']")
-  if (link) {
-    link.href = href
+  const existingLink = document.querySelector<HTMLLinkElement>("link[rel='icon']")
+
+  if (existingLink) {
+    // Remove existing favicon and create new one to bypass cache
+    existingLink.remove()
   }
+
+  const link = document.createElement('link')
+  link.rel = 'icon'
+  link.type = 'image/svg+xml'
+  link.href = `${href}?v=${Date.now()}`
+  document.head.appendChild(link)
 }
 
 export function useFaviconTheme(): void {
