@@ -113,11 +113,13 @@ export const WindowTabs = observer(function WindowTabs() {
           )}
         </div>
       ))}
-      <Tooltip content="Add window">
-        <button className={styles.addButton} onClick={() => store.addWindow()}>
-          <AddIcon />
-        </button>
-      </Tooltip>
+      {store.canAddWindow && (
+        <Tooltip content="Add window">
+          <button className={styles.addButton} onClick={() => store.addWindow()}>
+            <AddIcon />
+          </button>
+        </Tooltip>
+      )}
     </div>
   )
 })

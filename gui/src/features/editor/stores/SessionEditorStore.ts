@@ -3,6 +3,8 @@ import type { MultiplexerType } from '@/domain'
 import type { EditorSession, EditorWindow, EditorPane, Direction } from '../types'
 import { createDefaultPane, createDefaultWindow, createDefaultSession, generateId } from '../types'
 
+const MAX_WINDOWS = 10
+
 export class SessionEditorStore {
   session: EditorSession = createDefaultSession()
   selectedPaneId: string | null = null
@@ -135,7 +137,13 @@ export class SessionEditorStore {
     return this.session.windows.find((w) => w.id === this.selectedWindowId) ?? null
   }
 
-  addWindow(): string {
+  get canAddWindow(): boolean {
+    return this.session.windows.length < MAX_WINDOWS
+  }
+
+  addWindow(): string | null {
+    if (!this.canAddWindow) return null
+
     const windowNumber = this.session.windows.length + 1
     const newWindow = createDefaultWindow(`window-${windowNumber}`)
     this.session.windows.push(newWindow)
