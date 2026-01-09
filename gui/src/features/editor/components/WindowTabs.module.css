@@ -10,22 +10,20 @@
 .tab {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 0;
   padding: 0 12px;
   height: 28px;
   background: var(--ctp-surface0);
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color 0.15s ease, gap 0.15s ease;
   white-space: nowrap;
   user-select: none;
   border-radius: 8px;
 }
 
-.tab:hover {
-  background: var(--ctp-surface1);
-}
-
+.tab:hover,
 .tab.active {
+  gap: 6px;
   background: var(--ctp-surface1);
 }
 
@@ -60,20 +58,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
+  width: 0;
   height: 16px;
   border: none;
   border-radius: 2px;
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: width 0.15s ease, background-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
   padding: 0;
   opacity: 0;
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
 .tab:hover .closeButton,
 .tab.active .closeButton {
+  width: 16px;
   opacity: 1;
 }
 
