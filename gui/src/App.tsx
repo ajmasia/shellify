@@ -3,8 +3,11 @@ import { MainLayout } from '@/components/Layout'
 import { ProjectList } from '@/features/projects'
 import { SessionList } from '@/features/sessions'
 import { SessionEditor } from '@/features/editor'
+import { useFaviconTheme } from '@/hooks/useFaviconTheme'
 
 export function App() {
+  useFaviconTheme()
+
   return (
     <Routes>
       <Route
