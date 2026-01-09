@@ -9,18 +9,15 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/ajmasia/shellify/releases/latest">
-    <img src="https://img.shields.io/github/v/release/ajmasia/shellify?style=flat-square&color=blue" alt="Latest Release">
-  </a>
-  <a href="https://github.com/ajmasia/shellify/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/ajmasia/shellify?style=flat-square&color=green" alt="License">
-  </a>
-  <a href="https://github.com/ajmasia/shellify/stargazers">
-    <img src="https://img.shields.io/github/stars/ajmasia/shellify?style=flat-square&color=yellow" alt="Stars">
-  </a>
-  <img src="https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat-square&logo=go" alt="Go Version">
-  <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react" alt="React Version">
-  <img src="https://img.shields.io/badge/Platform-Linux%20%7C%20macOS-lightgrey?style=flat-square" alt="Platform">
+
+[![CI](https://github.com/ajmasia/shellify/actions/workflows/ci.yml/badge.svg)](https://github.com/ajmasia/shellify/actions/workflows/ci.yml)
+[![Release](https://github.com/ajmasia/shellify/actions/workflows/release.yml/badge.svg)](https://github.com/ajmasia/shellify/actions/workflows/release.yml)
+[![GitHub release](https://img.shields.io/github/v/release/ajmasia/shellify?logo=github)](https://github.com/ajmasia/shellify/releases/latest)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Go](https://img.shields.io/badge/Go-1.23+-00ADD8?logo=go&logoColor=white)](https://golang.org/)
+[![React](https://img.shields.io/badge/React-19.x-61DAFB?logo=react&logoColor=white)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+
 </p>
 
 ---
