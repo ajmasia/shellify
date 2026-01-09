@@ -60,13 +60,13 @@
 .windowBar {
   display: flex;
   align-items: center;
-  padding: 8px 16px;
+  padding: 16px;
   background: var(--ctp-base);
 }
 
 .screen {
   flex: 1;
-  padding: 16px;
+  padding: 0 16px 16px;
   background: var(--ctp-base);
   overflow: auto;
 }
