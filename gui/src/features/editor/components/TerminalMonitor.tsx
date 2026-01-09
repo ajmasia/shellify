@@ -18,7 +18,9 @@ export function TerminalMonitor({ children }: TerminalMonitorProps) {
         <span className={styles.titleText}>Session Preview</span>
         <div className={styles.spacer} />
       </div>
-      <WindowTabs />
+      <div className={styles.windowBar}>
+        <WindowTabs />
+      </div>
       <div className={styles.screen}>{children}</div>
     </div>
   )

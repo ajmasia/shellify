@@ -15,12 +15,14 @@
   height: 40px;
   padding: 0 16px;
   background: var(--ctp-surface0);
+  gap: 12px;
 }
 
 .windowControls {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .controlRed,
@@ -44,15 +46,22 @@
 }
 
 .titleText {
-  flex: 1;
-  text-align: center;
   font-size: 0.75rem;
   font-weight: 500;
   color: var(--text-secondary);
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .spacer {
-  width: 52px; /* Same as windowControls width to center title */
+  flex: 1;
+}
+
+.windowBar {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: var(--ctp-base);
 }
 
 .screen {
