@@ -36,6 +36,9 @@ func init() {
 	sessionCreateCmd.Flags().StringP("multiplexer", "m", "tmux", "Target multiplexer (tmux|zellij)")
 	sessionCreateCmd.Flags().StringP("working-dir", "w", "", "Working directory")
 	sessionCreateCmd.Flags().Bool("gui", false, "Open GUI editor for session creation")
+
+	// Shell completions
+	_ = sessionCreateCmd.RegisterFlagCompletionFunc("project", completeProjectNames)
 }
 
 func runSessionCreate(cmd *cobra.Command, args []string) error {

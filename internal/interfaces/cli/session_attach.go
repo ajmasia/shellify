@@ -30,6 +30,10 @@ Examples:
 func init() {
 	sessionCmd.AddCommand(sessionAttachCmd)
 	sessionAttachCmd.Flags().StringP("project", "p", "", "Project name or ID (for disambiguation)")
+
+	// Shell completions
+	_ = sessionAttachCmd.RegisterFlagCompletionFunc("project", completeProjectNames)
+	sessionAttachCmd.ValidArgsFunction = completeSessionNames
 }
 
 func runSessionAttach(cmd *cobra.Command, args []string) error {

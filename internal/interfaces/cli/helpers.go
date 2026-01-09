@@ -13,8 +13,78 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ajmasia/shellify/internal/application"
+	"github.com/ajmasia/shellify/internal/infrastructure/storage"
 	"github.com/ajmasia/shellify/internal/interfaces/tui"
 )
+
+// completeProjectNames returns a completion function for project names.
+func completeProjectNames(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	store, err := storage.NewStorage()
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	projectSvc := application.NewProjectService(store)
+	projects, err := projectSvc.ListProjects()
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	var names []string
+	for _, p := range projects {
+		if strings.HasPrefix(strings.ToLower(p.Name), strings.ToLower(toComplete)) {
+			names = append(names, p.Name)
+		}
+	}
+
+	return names, cobra.ShellCompDirectiveNoFileComp
+}
+
+// completeSessionNames returns a completion function for session names.
+func completeSessionNames(cmd *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	store, err := storage.NewStorage()
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	sessionSvc := application.NewSessionService(store, store)
+	projectFlag, _ := cmd.Flags().GetString("project")
+
+	var sessions []application.SessionWithProject
+
+	if projectFlag != "" {
+		projectSvc := application.NewProjectService(store)
+		project, err := projectSvc.GetProject(projectFlag)
+		if err != nil {
+			return nil, cobra.ShellCompDirectiveError
+		}
+		projectSessions, err := sessionSvc.ListSessions(project.ID)
+		if err != nil {
+			return nil, cobra.ShellCompDirectiveError
+		}
+		for _, s := range projectSessions {
+			sessions = append(sessions, application.SessionWithProject{
+				Session:     s,
+				ProjectID:   project.ID,
+				ProjectName: project.Name,
+			})
+		}
+	} else {
+		sessions, err = sessionSvc.ListAllSessions()
+		if err != nil {
+			return nil, cobra.ShellCompDirectiveError
+		}
+	}
+
+	var names []string
+	for _, s := range sessions {
+		if strings.HasPrefix(strings.ToLower(s.Session.Name), strings.ToLower(toComplete)) {
+			names = append(names, s.Session.Name)
+		}
+	}
+
+	return names, cobra.ShellCompDirectiveNoFileComp
+}
 
 // printJSON outputs data as formatted JSON.
 func printJSON(v any) error {

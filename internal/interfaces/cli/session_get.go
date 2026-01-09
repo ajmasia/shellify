@@ -29,6 +29,10 @@ Examples:
 func init() {
 	sessionCmd.AddCommand(sessionGetCmd)
 	sessionGetCmd.Flags().StringP("project", "p", "", "Project name or ID (for disambiguation)")
+
+	// Shell completions
+	_ = sessionGetCmd.RegisterFlagCompletionFunc("project", completeProjectNames)
+	sessionGetCmd.ValidArgsFunction = completeSessionNames
 }
 
 func runSessionGet(cmd *cobra.Command, args []string) error {

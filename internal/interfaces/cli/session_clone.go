@@ -31,6 +31,10 @@ func init() {
 	sessionCmd.AddCommand(sessionCloneCmd)
 	sessionCloneCmd.Flags().StringP("project", "p", "", "Project name or ID (for disambiguation)")
 	sessionCloneCmd.Flags().StringP("name", "n", "", "New session name")
+
+	// Shell completions
+	_ = sessionCloneCmd.RegisterFlagCompletionFunc("project", completeProjectNames)
+	sessionCloneCmd.ValidArgsFunction = completeSessionNames
 }
 
 func runSessionClone(cmd *cobra.Command, args []string) error {

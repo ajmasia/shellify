@@ -33,6 +33,10 @@ func init() {
 	sessionCmd.AddCommand(sessionStopCmd)
 	sessionStopCmd.Flags().StringP("project", "p", "", "Project name or ID (for disambiguation)")
 	sessionStopCmd.Flags().BoolP("force", "f", false, "Skip confirmation")
+
+	// Shell completions
+	_ = sessionStopCmd.RegisterFlagCompletionFunc("project", completeProjectNames)
+	sessionStopCmd.ValidArgsFunction = completeSessionNames
 }
 
 func runSessionStop(cmd *cobra.Command, args []string) error {

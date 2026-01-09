@@ -32,6 +32,10 @@ func init() {
 	sessionCmd.AddCommand(sessionEditCmd)
 	sessionEditCmd.Flags().StringP("project", "p", "", "Project name or ID")
 	sessionEditCmd.Flags().Bool("gui", false, "Open visual GUI editor in browser")
+
+	// Shell completions
+	_ = sessionEditCmd.RegisterFlagCompletionFunc("project", completeProjectNames)
+	sessionEditCmd.ValidArgsFunction = completeSessionNames
 }
 
 func runSessionEdit(cmd *cobra.Command, args []string) error {

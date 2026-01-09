@@ -32,6 +32,10 @@ func init() {
 	sessionCmd.AddCommand(sessionDeleteCmd)
 	sessionDeleteCmd.Flags().StringP("project", "p", "", "Project name or ID")
 	sessionDeleteCmd.Flags().BoolP("force", "f", false, "Skip confirmation")
+
+	// Shell completions
+	_ = sessionDeleteCmd.RegisterFlagCompletionFunc("project", completeProjectNames)
+	sessionDeleteCmd.ValidArgsFunction = completeSessionNames
 }
 
 func runSessionDelete(cmd *cobra.Command, args []string) error {

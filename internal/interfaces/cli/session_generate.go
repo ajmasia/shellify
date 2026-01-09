@@ -35,6 +35,10 @@ func init() {
 	sessionCmd.AddCommand(sessionGenerateCmd)
 	sessionGenerateCmd.Flags().StringP("project", "p", "", "Project name or ID (for disambiguation)")
 	sessionGenerateCmd.Flags().StringP("output", "o", "", "Output file path (default: stdout)")
+
+	// Shell completions
+	_ = sessionGenerateCmd.RegisterFlagCompletionFunc("project", completeProjectNames)
+	sessionGenerateCmd.ValidArgsFunction = completeSessionNames
 }
 
 func runSessionGenerate(cmd *cobra.Command, args []string) error {

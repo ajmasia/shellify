@@ -35,6 +35,10 @@ func init() {
 	sessionUpdateCmd.Flags().StringP("description", "d", "", "New description")
 	sessionUpdateCmd.Flags().StringP("multiplexer", "m", "", "New multiplexer (tmux|zellij)")
 	sessionUpdateCmd.Flags().StringP("working-dir", "w", "", "New working directory")
+
+	// Shell completions
+	_ = sessionUpdateCmd.RegisterFlagCompletionFunc("project", completeProjectNames)
+	sessionUpdateCmd.ValidArgsFunction = completeSessionNames
 }
 
 func runSessionUpdate(cmd *cobra.Command, args []string) error {

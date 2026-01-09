@@ -26,6 +26,9 @@ Examples:
 func init() {
 	sessionCmd.AddCommand(sessionListCmd)
 	sessionListCmd.Flags().StringP("project", "p", "", "Filter by project name or ID")
+
+	// Shell completions
+	_ = sessionListCmd.RegisterFlagCompletionFunc("project", completeProjectNames)
 }
 
 func runSessionList(cmd *cobra.Command, args []string) error {

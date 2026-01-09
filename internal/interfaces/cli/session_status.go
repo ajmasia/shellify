@@ -30,6 +30,10 @@ func init() {
 	sessionCmd.AddCommand(sessionStatusCmd)
 	sessionStatusCmd.Flags().StringP("project", "p", "", "Project name or ID (for disambiguation)")
 	sessionStatusCmd.Flags().Bool("json", false, "Output in JSON format")
+
+	// Shell completions
+	_ = sessionStatusCmd.RegisterFlagCompletionFunc("project", completeProjectNames)
+	sessionStatusCmd.ValidArgsFunction = completeSessionNames
 }
 
 func runSessionStatus(cmd *cobra.Command, args []string) error {
