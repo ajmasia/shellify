@@ -76,7 +76,7 @@ func (g *ZellijGenerator) Generate(session domain.Session) (string, error) {
 
 	// Launch zellij
 	lines = append(lines, "# Launch zellij with layout")
-	lines = append(lines, fmt.Sprintf(`cd "$WORKING_DIR" && zellij --layout "$LAYOUT_FILE" --session "%s"`, session.SessionName))
+	lines = append(lines, fmt.Sprintf(`cd "$WORKING_DIR" && zellij --new-session-with-layout "$LAYOUT_FILE" --session "%s"`, session.SessionName))
 	lines = append(lines, "")
 
 	// Post-commands

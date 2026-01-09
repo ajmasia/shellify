@@ -196,7 +196,7 @@ func TestZellijGenerator_OutputIsValidBashScript(t *testing.T) {
 	assert.Equal(t, 0, quoteCount%2, "unbalanced quotes in output")
 
 	// Should contain zellij launch command
-	assert.Contains(t, output, "zellij --layout")
+	assert.Contains(t, output, "zellij --new-session-with-layout")
 }
 
 func TestZellijGenerator_NestedPanes(t *testing.T) {
