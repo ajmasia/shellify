@@ -23,6 +23,10 @@ func (g *ZellijGenerator) Generate(session domain.Session) (string, error) {
 	sessionDir := session.WorkingDirectory
 	if sessionDir == "" {
 		sessionDir = "$HOME"
+	} else if strings.HasPrefix(sessionDir, "~/") {
+		sessionDir = "$HOME" + sessionDir[1:]
+	} else if sessionDir == "~" {
+		sessionDir = "$HOME"
 	}
 
 	lines := []string{

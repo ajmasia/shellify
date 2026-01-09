@@ -23,8 +23,8 @@ func TestTmuxGenerator_Generate(t *testing.T) {
 		assert.Contains(t, output, "# Session: proj_dev")
 		assert.Contains(t, output, "set -e")
 
-		// Verify working directory
-		assert.Contains(t, output, `WORKING_DIR="~/projects"`)
+		// Verify working directory (~ expanded to $HOME)
+		assert.Contains(t, output, `WORKING_DIR="$HOME/projects"`)
 
 		// Verify session creation
 		assert.Contains(t, output, `tmux new-session -d -s "proj_dev" -n "editor"`)
