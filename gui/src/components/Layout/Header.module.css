@@ -12,6 +12,10 @@
   gap: 0.5rem;
 }
 
+.titleIcon {
+  color: var(--text-secondary);
+}
+
 .title {
   margin: 0;
   font-size: 1.25rem;

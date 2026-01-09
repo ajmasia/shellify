@@ -12,9 +12,8 @@ import (
 )
 
 var sessionUpdateCmd = &cobra.Command{
-	Use:     "update [id|name]",
-	Aliases: []string{"edit"},
-	Short:   "Update a session",
+	Use:   "update [id|name]",
+	Short: "Update a session",
 	Long: `Update a session's properties.
 
 If no session is specified, interactive mode will prompt for selection.

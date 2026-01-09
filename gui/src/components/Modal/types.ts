@@ -35,6 +35,11 @@ export interface CreateSessionModalProps {
     description?: string
     targetMultiplexer: 'tmux' | 'zellij'
   }) => void
+  onSubmitAndEdit?: (data: {
+    name: string
+    description?: string
+    targetMultiplexer: 'tmux' | 'zellij'
+  }) => void
   loading?: boolean
 }
 

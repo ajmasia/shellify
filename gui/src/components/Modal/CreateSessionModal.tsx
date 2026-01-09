@@ -8,20 +8,28 @@ export function CreateSessionModal({
   isOpen,
   onClose,
   onSubmit,
+  onSubmitAndEdit,
   loading = false,
 }: CreateSessionModalProps) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [targetMultiplexer, setTargetMultiplexer] = useState<'tmux' | 'zellij'>('tmux')
 
+  const getFormData = () => ({
+    name: name.trim(),
+    description: description.trim() || undefined,
+    targetMultiplexer,
+  })
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim()) return
-    onSubmit({
-      name: name.trim(),
-      description: description.trim() || undefined,
-      targetMultiplexer,
-    })
+    onSubmit(getFormData())
+  }
+
+  const handleSubmitAndEdit = () => {
+    if (!name.trim() || !onSubmitAndEdit) return
+    onSubmitAndEdit(getFormData())
   }
 
   const handleClose = () => {
@@ -81,9 +89,21 @@ export function CreateSessionModal({
           <Button type="button" variant="ghost" onClick={handleClose} disabled={loading}>
             Cancel
           </Button>
-          <Button type="submit" disabled={!name.trim() || loading}>
-            Create
-          </Button>
+          <div className={styles.footerActions}>
+            {onSubmitAndEdit && (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleSubmitAndEdit}
+                disabled={!name.trim() || loading}
+              >
+                Create + Edit
+              </Button>
+            )}
+            <Button type="submit" disabled={!name.trim() || loading}>
+              Create
+            </Button>
+          </div>
         </div>
       </form>
     </BaseModal>

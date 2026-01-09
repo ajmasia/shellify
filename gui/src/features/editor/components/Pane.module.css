@@ -90,15 +90,15 @@
   gap: 6px;
   margin-top: auto;
   padding-top: 8px;
-  font-size: 0.625rem;
+  font-size: 0.8125rem;
   color: var(--ctp-overlay1);
   overflow: hidden;
 }
 
 .pathInfo svg {
   flex-shrink: 0;
-  width: 10px;
-  height: 10px;
+  width: 16px;
+  height: 16px;
 }
 
 .pathText {

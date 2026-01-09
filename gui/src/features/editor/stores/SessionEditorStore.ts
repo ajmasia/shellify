@@ -440,11 +440,11 @@ export class SessionEditorStore {
     const nextPane = siblings[paneIndex + 1]
     const totalSize = pane.size + nextPane.size
 
-    const clampedSize = Math.max(10, Math.min(newSize, totalSize - 10))
+    const clampedSize = Math.round(Math.max(10, Math.min(newSize, totalSize - 10)))
     const delta = clampedSize - pane.size
 
     pane.size = clampedSize
-    nextPane.size = nextPane.size - delta
+    nextPane.size = Math.round(nextPane.size - delta)
   }
 
   private findSiblings(paneId: string, panes: EditorPane[]): EditorPane[] | undefined {

@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
+	"syscall"
 	"text/tabwriter"
 	"time"
 )
@@ -94,4 +96,71 @@ func generateSessionName(prefix, name string) string {
 		return prefix + "_" + sessionName
 	}
 	return sessionName
+}
+
+// ensureServerRunning checks if the server is running and starts it if not.
+func ensureServerRunning() error {
+	// Check if server is already running
+	if isServerRunning() {
+		return nil
+	}
+
+	// Start server in daemon mode
+	fmt.Println("Starting server...")
+	exe, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("failed to get executable path: %w", err)
+	}
+
+	// Build command args
+	args := []string{"server", "-d"}
+
+	// Try to find gui/dist directory for development
+	guiDistPaths := []string{
+		"gui/dist",
+		"../gui/dist",
+		"../../gui/dist",
+	}
+	for _, path := range guiDistPaths {
+		if info, err := os.Stat(path); err == nil && info.IsDir() {
+			args = append(args, "-s", path)
+			break
+		}
+	}
+
+	cmd := exec.Command(exe, args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to start server: %w", err)
+	}
+
+	// Wait a moment for server to be ready
+	time.Sleep(500 * time.Millisecond)
+
+	fmt.Println("Server running at http://localhost:3777")
+	fmt.Println("Use 'sfy server stop' when done")
+	fmt.Println()
+	return nil
+}
+
+// isServerRunning checks if the server process is running.
+func isServerRunning() bool {
+	pid, err := readPIDFile()
+	if err != nil {
+		return false
+	}
+
+	process, err := os.FindProcess(pid)
+	if err != nil {
+		return false
+	}
+
+	// On Unix, FindProcess always succeeds, send signal 0 to check
+	if err := process.Signal(syscall.Signal(0)); err != nil {
+		return false
+	}
+
+	return true
 }

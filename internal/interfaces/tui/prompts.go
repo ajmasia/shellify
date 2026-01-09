@@ -793,6 +793,26 @@ func ConfirmSessionCreation() (bool, error) {
 	return Confirm("Create this session?")
 }
 
+// SelectEditTarget prompts for which file type to edit for zellij sessions.
+func SelectEditTarget() (string, error) {
+	var selected string
+
+	err := huh.NewSelect[string]().
+		Title("What do you want to edit?").
+		Options(
+			huh.NewOption("Bash script (.sh)", "script"),
+			huh.NewOption("KDL layout (.kdl)", "kdl"),
+		).
+		Value(&selected).
+		WithTheme(theme).
+		Run()
+	if err != nil {
+		return "", err
+	}
+
+	return selected, nil
+}
+
 // SelectMultipleSessions shows an interactive multi-select for sessions.
 func SelectMultipleSessions(options []SessionOption) ([]SessionOption, error) {
 	if len(options) == 0 {
