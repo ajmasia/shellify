@@ -5,6 +5,7 @@ import type {
   UpdateProjectRequest,
   Session,
   CreateSessionRequest,
+  UpdateSessionRequest,
 } from '@/domain'
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api'
@@ -72,6 +73,12 @@ export const api = {
     create: (data: CreateSessionRequest) =>
       request<{ projectId: string; session: Session }>('/sessions', {
         method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    update: (id: string, data: UpdateSessionRequest) =>
+      request<Session>(`/sessions/${id}`, {
+        method: 'PUT',
         body: JSON.stringify(data),
       }),
 

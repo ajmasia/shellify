@@ -151,7 +151,7 @@ func TestZellijGenerator_Name(t *testing.T) {
 
 func TestZellijGenerator_FileExtension(t *testing.T) {
 	gen := &ZellijGenerator{}
-	assert.Equal(t, ".kdl", gen.FileExtension())
+	assert.Equal(t, ".sh", gen.FileExtension())
 }
 
 func TestToZellijDirection(t *testing.T) {
@@ -171,19 +171,22 @@ func TestToZellijDirection(t *testing.T) {
 	}
 }
 
-func TestZellijGenerator_OutputIsValidKDL(t *testing.T) {
+func TestZellijGenerator_OutputIsValidBashScript(t *testing.T) {
 	gen := &ZellijGenerator{}
 	session := createMultiWindowSession()
 	output, err := gen.Generate(session)
 	require.NoError(t, err)
 
-	// Basic validation that output looks like valid KDL
+	// Basic validation that output is a valid bash script with embedded KDL
 	lines := strings.Split(output, "\n")
 
-	// First non-comment line should open layout block
+	// First line should be shebang
+	assert.True(t, strings.HasPrefix(lines[0], "#!/bin/bash"), "first line should be shebang")
+
+	// Should contain embedded KDL layout
 	assert.Contains(t, output, "layout {")
 
-	// Should have matching braces
+	// Should have matching braces in KDL
 	openBraces := strings.Count(output, "{")
 	closeBraces := strings.Count(output, "}")
 	assert.Equal(t, openBraces, closeBraces, "unbalanced braces in output")
@@ -192,8 +195,8 @@ func TestZellijGenerator_OutputIsValidKDL(t *testing.T) {
 	quoteCount := strings.Count(output, `"`)
 	assert.Equal(t, 0, quoteCount%2, "unbalanced quotes in output")
 
-	// First line should be a comment
-	assert.True(t, strings.HasPrefix(lines[0], "//"), "first line should be a comment")
+	// Should contain zellij launch command
+	assert.Contains(t, output, "zellij --new-session-with-layout")
 }
 
 func TestZellijGenerator_NestedPanes(t *testing.T) {

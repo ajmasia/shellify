@@ -1,14 +1,14 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import styles from './IconButton.module.css'
 
-type IconButtonVariant = 'default' | 'danger' | 'ghost'
+export type IconButtonVariant = 'default' | 'danger' | 'ghost' | 'primary'
 type IconButtonSize = 'small' | 'medium' | 'large'
 
 interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: IconButtonVariant
   size?: IconButtonSize
   children: ReactNode
-  'aria-label': string
+  'aria-label'?: string
 }
 
 export function IconButton({

@@ -45,26 +45,21 @@ func (l *Launcher) LaunchTmux(sessionName, scriptContent string) error {
 	return syscall.Exec("/bin/bash", []string{"bash", scriptPath}, os.Environ())
 }
 
-// LaunchZellij starts a new zellij session using the provided layout content.
+// LaunchZellij starts a new zellij session using the provided script content.
+// The script is a bash wrapper that creates a temporary KDL layout and launches zellij.
 // If the session already exists, it attaches to it instead.
 // This replaces the current process.
-func (l *Launcher) LaunchZellij(sessionName, layoutContent string) error {
+func (l *Launcher) LaunchZellij(sessionName, scriptContent string) error {
 	if l.IsZellijRunning(sessionName) {
 		return l.AttachZellij(sessionName)
 	}
 
-	layoutPath := filepath.Join(l.tempDir, sessionName+".kdl")
-	if err := os.WriteFile(layoutPath, []byte(layoutContent), 0644); err != nil {
-		return fmt.Errorf("writing layout: %w", err)
+	scriptPath := filepath.Join(l.tempDir, sessionName+".sh")
+	if err := os.WriteFile(scriptPath, []byte(scriptContent), 0755); err != nil {
+		return fmt.Errorf("writing script: %w", err)
 	}
 
-	zellijPath, err := exec.LookPath("zellij")
-	if err != nil {
-		return fmt.Errorf("zellij not found: %w", err)
-	}
-
-	args := []string{"zellij", "--new-session-with-layout", layoutPath, "--session", sessionName}
-	return syscall.Exec(zellijPath, args, os.Environ())
+	return syscall.Exec("/bin/bash", []string{"bash", scriptPath}, os.Environ())
 }
 
 // LaunchTmuxDetached starts a tmux session in a new terminal window.
@@ -87,8 +82,9 @@ func (l *Launcher) LaunchTmuxDetached(sessionName, scriptContent string) error {
 }
 
 // LaunchZellijDetached starts a zellij session in a new terminal window.
+// The script is a bash wrapper that creates a temporary KDL layout and launches zellij.
 // Used by server to avoid replacing the server process.
-func (l *Launcher) LaunchZellijDetached(sessionName, layoutContent string) error {
+func (l *Launcher) LaunchZellijDetached(sessionName, scriptContent string) error {
 	if l.terminal == "" {
 		return fmt.Errorf("no terminal emulator found")
 	}
@@ -97,12 +93,12 @@ func (l *Launcher) LaunchZellijDetached(sessionName, layoutContent string) error
 		return OpenTerminalWithCommand(l.terminal, "zellij", "attach", sessionName)
 	}
 
-	layoutPath := filepath.Join(l.tempDir, sessionName+".kdl")
-	if err := os.WriteFile(layoutPath, []byte(layoutContent), 0644); err != nil {
-		return fmt.Errorf("writing layout: %w", err)
+	scriptPath := filepath.Join(l.tempDir, sessionName+".sh")
+	if err := os.WriteFile(scriptPath, []byte(scriptContent), 0755); err != nil {
+		return fmt.Errorf("writing script: %w", err)
 	}
 
-	return OpenTerminalWithCommand(l.terminal, "zellij", "--new-session-with-layout", layoutPath, "--session", sessionName)
+	return OpenTerminalWithCommand(l.terminal, "bash", scriptPath)
 }
 
 // AttachTmux attaches to an existing tmux session.

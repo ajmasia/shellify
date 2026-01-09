@@ -47,9 +47,15 @@
 
 .footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   gap: 0.75rem;
   padding-top: 1rem;
+}
+
+.footerActions {
+  display: flex;
+  gap: 0.5rem;
 }
 
 .form {

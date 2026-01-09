@@ -32,6 +32,16 @@
   color: var(--text-primary);
 }
 
+.primary {
+  background-color: var(--accent-color);
+  color: var(--ctp-crust);
+}
+
+.primary:hover:not(:disabled) {
+  background-color: var(--accent-hover);
+  color: var(--ctp-crust);
+}
+
 /* Sizes */
 .small {
   width: 1.75rem;

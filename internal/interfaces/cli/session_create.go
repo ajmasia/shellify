@@ -35,9 +35,16 @@ func init() {
 	sessionCreateCmd.Flags().StringP("description", "d", "", "Session description")
 	sessionCreateCmd.Flags().StringP("multiplexer", "m", "tmux", "Target multiplexer (tmux|zellij)")
 	sessionCreateCmd.Flags().StringP("working-dir", "w", "", "Working directory")
+	sessionCreateCmd.Flags().Bool("gui", false, "Open GUI editor for session creation")
 }
 
 func runSessionCreate(cmd *cobra.Command, args []string) error {
+	// Check for --gui flag
+	guiMode, _ := cmd.Flags().GetBool("gui")
+	if guiMode {
+		return openGUIForSessionCreate(cmd)
+	}
+
 	store, err := storage.NewStorage()
 	if err != nil {
 		return err
@@ -162,5 +169,34 @@ func runSessionCreate(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Session name: %s\n", session.SessionName)
 	fmt.Printf("Windows: %d\n", len(session.Windows))
 
+	return nil
+}
+
+func openGUIForSessionCreate(cmd *cobra.Command) error {
+	projectFlag, _ := cmd.Flags().GetString("project")
+
+	// Ensure server is running
+	if err := ensureServerRunning(); err != nil {
+		return err
+	}
+
+	// Build URL
+	url := "http://localhost:3777"
+	if projectFlag != "" {
+		// Resolve project ID if name was provided
+		store, err := storage.NewStorage()
+		if err != nil {
+			return err
+		}
+		projectSvc := application.NewProjectService(store)
+		project, err := projectSvc.GetProject(projectFlag)
+		if err != nil {
+			return err
+		}
+		url = fmt.Sprintf("http://localhost:3777/projects/%s", project.ID)
+	}
+
+	fmt.Printf("Opening GUI: %s\n", url)
+	openURL(url)
 	return nil
 }

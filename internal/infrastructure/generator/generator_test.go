@@ -21,7 +21,7 @@ func TestNew(t *testing.T) {
 		gen, err := New(domain.MultiplexerZellij)
 		require.NoError(t, err)
 		assert.Equal(t, "zellij", gen.Name())
-		assert.Equal(t, ".kdl", gen.FileExtension())
+		assert.Equal(t, ".sh", gen.FileExtension())
 	})
 
 	t.Run("returns error for unsupported multiplexer", func(t *testing.T) {

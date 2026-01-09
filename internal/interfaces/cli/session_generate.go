@@ -124,12 +124,7 @@ func runSessionGenerate(cmd *cobra.Command, args []string) error {
 
 		session, _ := sessionSvc.GetSession(projectID, sessionID)
 		fmt.Printf("Generated %s script: %s\n", session.TargetMultiplexer, filePath)
-
-		if session.TargetMultiplexer == "tmux" {
-			fmt.Printf("\nTo run:\n  %s\n", filePath)
-		} else {
-			fmt.Printf("\nTo run:\n  zellij --layout %s\n", filePath)
-		}
+		fmt.Printf("\nTo run:\n  %s\n", filePath)
 	} else {
 		// Output to stdout
 		result, err := generatorSvc.GenerateSession(projectID, sessionID)

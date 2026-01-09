@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-01-09
+
+### Added
+
+- Visual Session Editor for designing pane layouts:
+  - Interactive pane grid with drag-to-resize
+  - Split panes horizontally/vertically
+  - Window management (add, remove, rename, reorder tabs)
+  - Pane configuration panel (name, command, working directory)
+  - Session settings modal (name, description, multiplexer, environment)
+  - Undo/Redo functionality with keyboard shortcuts (Ctrl+Z, Ctrl+Y)
+  - Unsaved changes detection with confirmation modal
+  - Maximum 10 windows per session limit
+- CLI-GUI integration:
+  - `sfy session edit [id|name]` - Edit session JSON in $EDITOR with warning
+  - `sfy session edit --gui` - Open visual editor in browser
+  - `sfy session create --gui` - Create session with GUI editor
+  - "Create + Edit" button in CreateSessionModal
+  - Auto-start server when using `--gui` flag
+- Editor icons: NewWindow, SplitVertical, SplitHorizontal, Undo, Redo, Save
+- Favicon theme detection (dark/light system theme)
+- Project name display in editor header (project: session)
+- Alt+N keyboard shortcut to create session from session list
+- Multiplexer chip in session cards
+
+### Fixed
+
+- Preserve nested pane tree structure when saving sessions via API
+- Expand tilde (~) to $HOME in working directory for generators
+- Use `--new-session-with-layout` flag for zellij session launch
+- Generate bash wrapper script for zellij sessions
+
+### Changed
+
+- Improved editor UI with better spacing and text sizes
+- Separated window tabs bar from terminal title bar
+- Unified header styles across components
+
 ## [0.7.1] - 2026-01-08
 
 ### Fixed

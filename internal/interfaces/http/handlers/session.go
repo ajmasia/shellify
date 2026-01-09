@@ -51,18 +51,22 @@ type CreateSessionSessionInput struct {
 
 // WindowInput is the window input for creation.
 type WindowInput struct {
-	Name             string      `json:"name"`
-	WorkingDirectory string      `json:"workingDirectory,omitempty"`
-	Command          string      `json:"command,omitempty"`
-	Panes            []PaneInput `json:"panes,omitempty"`
+	Name             string           `json:"name"`
+	WorkingDirectory string           `json:"workingDirectory,omitempty"`
+	Command          string           `json:"command,omitempty"`
+	RootDirection    domain.Direction `json:"rootDirection,omitempty"`
+	Panes            []PaneInput      `json:"panes,omitempty"`
 }
 
-// PaneInput is the pane input for creation.
+// PaneInput is the pane input for creation (supports recursive structure).
 type PaneInput struct {
-	Name             string  `json:"name,omitempty"`
-	Command          string  `json:"command,omitempty"`
-	WorkingDirectory string  `json:"workingDirectory,omitempty"`
-	Size             float64 `json:"size,omitempty"`
+	ID               string           `json:"id,omitempty"`
+	Name             string           `json:"name,omitempty"`
+	Command          string           `json:"command,omitempty"`
+	WorkingDirectory string           `json:"workingDirectory,omitempty"`
+	Size             float64          `json:"size,omitempty"`
+	Direction        domain.Direction `json:"direction,omitempty"`
+	Children         []PaneInput      `json:"children,omitempty"`
 }
 
 // CloneSessionRequest is the request body for cloning a session.
@@ -148,6 +152,19 @@ func (h *SessionHandler) Create() http.HandlerFunc {
 	}
 }
 
+// UpdateSessionRequest is the request body for updating a session.
+type UpdateSessionRequest struct {
+	Name             *string                 `json:"name,omitempty"`
+	Description      *string                 `json:"description,omitempty"`
+	WorkingDirectory *string                 `json:"workingDirectory,omitempty"`
+	Multiplexer      *domain.MultiplexerType `json:"targetMultiplexer,omitempty"`
+	Environment      map[string]string       `json:"environment,omitempty"`
+	PreCommands      []string                `json:"preCommands,omitempty"`
+	PostCommands     []string                `json:"postCommands,omitempty"`
+	Windows          []WindowInput           `json:"windows,omitempty"`
+	DefaultWindowID  *string                 `json:"defaultWindowId,omitempty"`
+}
+
 // Update updates a session.
 func (h *SessionHandler) Update() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -160,12 +177,7 @@ func (h *SessionHandler) Update() http.HandlerFunc {
 			return
 		}
 
-		var req struct {
-			Name             *string                 `json:"name,omitempty"`
-			Description      *string                 `json:"description,omitempty"`
-			WorkingDirectory *string                 `json:"workingDirectory,omitempty"`
-			Multiplexer      *domain.MultiplexerType `json:"targetMultiplexer,omitempty"`
-		}
+		var req UpdateSessionRequest
 		if err := DecodeJSON(r, &req); err != nil {
 			BadRequest(w, "invalid JSON")
 			return
@@ -176,6 +188,11 @@ func (h *SessionHandler) Update() http.HandlerFunc {
 			Description:      req.Description,
 			WorkingDirectory: req.WorkingDirectory,
 			Multiplexer:      req.Multiplexer,
+			Environment:      req.Environment,
+			PreCommands:      req.PreCommands,
+			PostCommands:     req.PostCommands,
+			Windows:          convertWindowInputs(req.Windows),
+			DefaultWindowID:  req.DefaultWindowID,
 		}
 
 		session, err := h.sessionSvc.UpdateSession(projectID, sessionID, input)
@@ -367,21 +384,25 @@ func convertWindowInputs(windows []WindowInput) []application.WindowInput {
 			Name:             w.Name,
 			WorkingDirectory: w.WorkingDirectory,
 			Command:          w.Command,
+			RootDirection:    w.RootDirection,
 			Panes:            convertPaneInputs(w.Panes),
 		}
 	}
 	return result
 }
 
-// convertPaneInputs converts handler PaneInput to application PaneInput.
+// convertPaneInputs converts handler PaneInput to application PaneInput (recursive).
 func convertPaneInputs(panes []PaneInput) []application.PaneInput {
 	result := make([]application.PaneInput, len(panes))
 	for i, p := range panes {
 		result[i] = application.PaneInput{
+			ID:               p.ID,
 			Name:             p.Name,
 			Command:          p.Command,
 			WorkingDirectory: p.WorkingDirectory,
 			Size:             p.Size,
+			Direction:        p.Direction,
+			Children:         convertPaneInputs(p.Children),
 		}
 	}
 	return result

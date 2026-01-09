@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
 import { FAB } from '@/components/FAB'
 import { useModal } from '@/components/Modal'
@@ -13,7 +13,7 @@ export function ProjectList() {
   const { openCreateProjectModal, openConfirmModal, closeModal } = useModal()
   const [actionLoading, setActionLoading] = useState(false)
 
-  const handleCreate = () => {
+  const handleCreate = useCallback(() => {
     openCreateProjectModal({
       onSubmit: async (data) => {
         setActionLoading(true)
@@ -30,7 +30,18 @@ export function ProjectList() {
       },
       loading: actionLoading,
     })
-  }
+  }, [openCreateProjectModal, closeModal, refetch, actionLoading])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.altKey && e.key === 'n') {
+        e.preventDefault()
+        handleCreate()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [handleCreate])
 
   const handleEdit = (project: ProjectWithCount) => {
     toast.info(`Edit project: ${project.name} (not implemented yet)`)
@@ -92,7 +103,7 @@ export function ProjectList() {
           ))}
         </div>
       )}
-      <FAB onClick={handleCreate} tooltip="Create project" />
+      <FAB onClick={handleCreate} tooltip="Create project (Alt+N)" />
     </div>
   )
 }

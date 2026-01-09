@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { FAB } from '@/components/FAB'
@@ -37,34 +37,59 @@ export function SessionList() {
     }
   }, [projectId, navigate, uiStore])
 
-  const handleCreate = () => {
+  const handleCreate = useCallback(() => {
     if (!projectId) return
 
+    const createSession = async (data: {
+      name: string
+      description?: string
+      targetMultiplexer: 'tmux' | 'zellij'
+    }) => {
+      setActionLoading(true)
+      try {
+        const result = await api.sessions.create({
+          projectId,
+          session: {
+            name: data.name,
+            description: data.description,
+            targetMultiplexer: data.targetMultiplexer,
+            windows: [{ name: 'main' }],
+          },
+        })
+        closeModal()
+        toast.success('Session created')
+        await refetch()
+        return result.session.id
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Failed to create session')
+        return null
+      } finally {
+        setActionLoading(false)
+      }
+    }
+
     openCreateSessionModal({
-      onSubmit: async (data) => {
-        setActionLoading(true)
-        try {
-          await api.sessions.create({
-            projectId,
-            session: {
-              name: data.name,
-              description: data.description,
-              targetMultiplexer: data.targetMultiplexer,
-              windows: [{ name: 'main' }],
-            },
-          })
-          closeModal()
-          toast.success('Session created')
-          await refetch()
-        } catch (err) {
-          toast.error(err instanceof Error ? err.message : 'Failed to create session')
-        } finally {
-          setActionLoading(false)
+      onSubmit: createSession,
+      onSubmitAndEdit: async (data) => {
+        const sessionId = await createSession(data)
+        if (sessionId) {
+          navigate(`/sessions/${sessionId}/edit`)
         }
       },
       loading: actionLoading,
     })
-  }
+  }, [projectId, openCreateSessionModal, closeModal, refetch, actionLoading, navigate])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.altKey && e.key === 'n') {
+        e.preventDefault()
+        handleCreate()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [handleCreate])
 
   const handleDelete = (session: Session) => {
     openConfirmModal({
@@ -119,7 +144,7 @@ export function SessionList() {
           ))}
         </div>
       )}
-      <FAB onClick={handleCreate} tooltip="Create session" />
+      <FAB onClick={handleCreate} tooltip="Create session (Alt+N)" />
     </div>
   )
 }
