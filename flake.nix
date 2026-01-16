@@ -23,7 +23,7 @@
 
             src = ./gui;
 
-            npmDepsHash = "sha256-1c5l1MZLXLIZuAi/xkPIf3etly5OF2khXcvynTfIJMM=";
+            npmDepsHash = "sha256-XJtdWHriqmHBTNWV/1exxVwGyAqc7jB3HLSO8J2Jrxc=";
 
             nodejs = pkgs.nodejs_22;
 
