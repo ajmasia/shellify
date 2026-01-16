@@ -42,7 +42,11 @@ func (l *Launcher) LaunchTmux(sessionName, scriptContent string) error {
 		return fmt.Errorf("writing script: %w", err)
 	}
 
-	return syscall.Exec("/bin/bash", []string{"bash", scriptPath}, os.Environ())
+	bashPath, err := exec.LookPath("bash")
+	if err != nil {
+		return fmt.Errorf("bash not found: %w", err)
+	}
+	return syscall.Exec(bashPath, []string{"bash", scriptPath}, os.Environ())
 }
 
 // LaunchZellij starts a new zellij session using the provided script content.
@@ -59,7 +63,11 @@ func (l *Launcher) LaunchZellij(sessionName, scriptContent string) error {
 		return fmt.Errorf("writing script: %w", err)
 	}
 
-	return syscall.Exec("/bin/bash", []string{"bash", scriptPath}, os.Environ())
+	bashPath, err := exec.LookPath("bash")
+	if err != nil {
+		return fmt.Errorf("bash not found: %w", err)
+	}
+	return syscall.Exec(bashPath, []string{"bash", scriptPath}, os.Environ())
 }
 
 // LaunchTmuxDetached starts a tmux session in a new terminal window.
