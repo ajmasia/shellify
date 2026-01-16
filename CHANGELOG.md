@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.5] - 2026-01-16
+
+### Fixed
+
+- Correct npmDepsHash for Nix GUI build
+
+## [0.9.4] - 2026-01-16
+
+### Added
+
+- Nix package build with embedded GUI and shell completions
+- Home Manager module (`programs.shellify.enable`)
+- Overlay for NixOS configurations
+- NixOS installation documentation in README
+
+### Changed
+
+- Update devShell to use Node.js 22 (required by GUI)
+- Update prerequisites documentation (Go 1.24+, Node.js 22+)
+
 ## [0.9.3] - 2026-01-16
 
 ### Fixed
