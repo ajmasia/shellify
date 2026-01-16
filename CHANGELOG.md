@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.2] - 2026-01-16
+
+### Fixed
+
+- Session launch fails with "no such file or directory" on NixOS and other systems where bash is not at /bin/bash
+
 ## [0.9.1] - 2026-01-09
 
 ### Changed
