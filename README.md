@@ -87,6 +87,92 @@ make build
 sudo mv bin/sfy /usr/local/bin/
 ```
 
+### NixOS / Nix
+
+Shellify provides a Nix flake for installation on NixOS or any system with Nix.
+
+#### Using nix profile (imperative)
+
+```bash
+nix profile install github:ajmasia/shellify
+```
+
+#### Using nix run (try without installing)
+
+```bash
+nix run github:ajmasia/shellify -- --help
+```
+
+#### NixOS configuration (declarative)
+
+Add to your `flake.nix` inputs:
+
+```nix
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    shellify.url = "github:ajmasia/shellify";
+  };
+}
+```
+
+Then in your `configuration.nix`:
+
+```nix
+{ inputs, pkgs, ... }:
+{
+  environment.systemPackages = [
+    inputs.shellify.packages.${pkgs.system}.default
+  ];
+}
+```
+
+#### Home Manager (module)
+
+Add the module to your home-manager imports:
+
+```nix
+# In flake.nix
+{
+  inputs = {
+    home-manager.url = "github:nix-community/home-manager";
+    shellify.url = "github:ajmasia/shellify";
+  };
+}
+
+# In your home configuration
+{ inputs, ... }:
+{
+  imports = [ inputs.shellify.homeManagerModules.default ];
+
+  programs.shellify.enable = true;
+}
+```
+
+#### Home Manager (manual)
+
+```nix
+{ inputs, pkgs, ... }:
+{
+  home.packages = [
+    inputs.shellify.packages.${pkgs.system}.default
+  ];
+}
+```
+
+#### Using the overlay
+
+```nix
+{
+  nixpkgs.overlays = [ inputs.shellify.overlays.default ];
+
+  # Then use it as a regular package
+  environment.systemPackages = [ pkgs.shellify ];
+}
+```
+
+The Nix package includes CLI with embedded GUI and shell completions for bash, zsh, and fish.
+
 ### Uninstall
 
 ```bash
@@ -198,15 +284,15 @@ The `config.json` file stores application settings:
 
 ### Prerequisites
 
-- Go 1.23+
-- Node.js 20+
+- Go 1.24+
+- Node.js 22+ (for GUI)
 - tmux or zellij (for testing)
 - golangci-lint (for linting)
 - goreleaser (for releases)
 
 ### Setup with Nix (Recommended)
 
-If you have [Nix](https://nixos.org/) installed with flakes enabled:
+The project includes a Nix flake that provides both a **development shell** and a **package build**.
 
 ```bash
 # Clone repository
@@ -219,9 +305,17 @@ nix develop
 # Or run commands directly
 nix develop -c make build
 nix develop -c make test
+nix develop -c make lint
 ```
 
-The Nix flake provides: Go, Node.js, golangci-lint, goreleaser, tmux, and zellij.
+The development shell (`nix develop`) provides:
+- Go 1.24 (matches go.mod toolchain)
+- Node.js 22 (for GUI development)
+- goreleaser
+- tmux and zellij (for testing)
+- gnumake
+
+The package build (`nix build .#shellify`) creates a fully compiled binary with embedded GUI, ready for distribution.
 
 ### Manual Setup
 
