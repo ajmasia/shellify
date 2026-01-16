@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.3] - 2026-01-16
+
+### Fixed
+
+- Sessions created via CLI with multiple panes now render correctly (was showing only one pane)
+
+### Added
+
+- Nix flake for reproducible development environment
+
+### Changed
+
+- Update golangci-lint to v1.62.2 for Go 1.24+ compatibility
+
 ## [0.9.2] - 2026-01-16
 
 ### Fixed
