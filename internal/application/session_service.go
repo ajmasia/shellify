@@ -191,7 +191,7 @@ func (s *SessionService) CreateSession(projectID string, input CreateSessionInpu
 
 		// Convert pane inputs to domain panes (preserving tree structure)
 		if len(w.Panes) > 0 {
-			window.Panes = convertPaneInputsToDomain(w.Panes, i+1)
+			window.Panes = convertPaneInputsToDomain(w.Panes, i+1, direction)
 		} else {
 			// No panes provided, create default
 			window.Panes = []domain.Pane{
@@ -299,7 +299,7 @@ func (s *SessionService) UpdateSession(projectID, idOrName string, input UpdateS
 
 			// Convert pane inputs to domain panes (preserving tree structure)
 			if len(w.Panes) > 0 {
-				window.Panes = convertPaneInputsToDomain(w.Panes, i+1)
+				window.Panes = convertPaneInputsToDomain(w.Panes, i+1, direction)
 			} else {
 				// No panes provided, create default
 				window.Panes = []domain.Pane{
@@ -429,8 +429,58 @@ func generateSessionName(prefix, name string) string {
 	return sessionName
 }
 
-// convertPaneInputsToDomain converts PaneInput slice to domain.Pane slice (recursive).
-func convertPaneInputsToDomain(inputs []PaneInput, windowNum int) []domain.Pane {
+// convertPaneInputsToDomain converts PaneInput slice to domain.Pane slice.
+// If multiple flat panes (without children) are provided, they are wrapped
+// in a container pane with the specified direction to create a proper tree structure.
+func convertPaneInputsToDomain(inputs []PaneInput, windowNum int, direction domain.Direction) []domain.Pane {
+	if len(inputs) == 0 {
+		return nil
+	}
+
+	// Check if we have multiple flat panes (no children)
+	hasChildren := false
+	for _, p := range inputs {
+		if len(p.Children) > 0 {
+			hasChildren = true
+			break
+		}
+	}
+
+	// If multiple flat panes, wrap them in a container
+	if len(inputs) > 1 && !hasChildren {
+		children := make([]domain.Pane, len(inputs))
+		for i, p := range inputs {
+			paneID := p.ID
+			if paneID == "" {
+				paneID = fmt.Sprintf("w%d-p%d", windowNum, i+1)
+			}
+
+			size := p.Size
+			if size == 0 {
+				size = 100.0 / float64(len(inputs))
+			}
+
+			children[i] = domain.Pane{
+				ID:               paneID,
+				Name:             strings.TrimSpace(p.Name),
+				Command:          strings.TrimSpace(p.Command),
+				WorkingDirectory: strings.TrimSpace(p.WorkingDirectory),
+				Size:             size,
+			}
+		}
+
+		// Return a single container pane with all inputs as children
+		return []domain.Pane{
+			{
+				ID:        fmt.Sprintf("w%d-root", windowNum),
+				Size:      100,
+				Direction: direction,
+				Children:  children,
+			},
+		}
+	}
+
+	// Single pane or panes with children: convert normally
 	result := make([]domain.Pane, len(inputs))
 	for i, p := range inputs {
 		paneID := p.ID
@@ -454,7 +504,7 @@ func convertPaneInputsToDomain(inputs []PaneInput, windowNum int) []domain.Pane 
 
 		// Recursively convert children
 		if len(p.Children) > 0 {
-			pane.Children = convertPaneInputsToDomain(p.Children, windowNum)
+			pane.Children = convertPaneInputsToDomain(p.Children, windowNum, p.Direction)
 		}
 
 		result[i] = pane
