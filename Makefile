@@ -58,8 +58,15 @@ test-race:
 
 ## lint: Run golangci-lint
 lint:
-	@test -f "$$(go env GOPATH)/bin/golangci-lint" || (echo "Installing golangci-lint v1.57.2..." && go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.57.2)
-	@"$$(go env GOPATH)/bin/golangci-lint" run ./...
+	@if command -v golangci-lint >/dev/null 2>&1; then \
+		golangci-lint run ./...; \
+	elif test -f "$$(go env GOPATH)/bin/golangci-lint"; then \
+		"$$(go env GOPATH)/bin/golangci-lint" run ./...; \
+	else \
+		echo "Installing golangci-lint v1.62.2..." && \
+		go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.62.2 && \
+		"$$(go env GOPATH)/bin/golangci-lint" run ./...; \
+	fi
 
 ## fmt: Format code
 fmt:

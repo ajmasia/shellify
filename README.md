@@ -201,8 +201,29 @@ The `config.json` file stores application settings:
 - Go 1.23+
 - Node.js 20+
 - tmux or zellij (for testing)
+- golangci-lint (for linting)
+- goreleaser (for releases)
 
-### Setup
+### Setup with Nix (Recommended)
+
+If you have [Nix](https://nixos.org/) installed with flakes enabled:
+
+```bash
+# Clone repository
+git clone https://github.com/ajmasia/shellify.git
+cd shellify
+
+# Enter development shell (includes all dependencies)
+nix develop
+
+# Or run commands directly
+nix develop -c make build
+nix develop -c make test
+```
+
+The Nix flake provides: Go, Node.js, golangci-lint, goreleaser, tmux, and zellij.
+
+### Manual Setup
 
 ```bash
 # Clone repository

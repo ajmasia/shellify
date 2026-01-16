@@ -28,6 +28,10 @@ go.work
 .DS_Store
 Thumbs.db
 
+# Nix
+.direnv/
+result
+
 # Project specific
 deprecated/
 

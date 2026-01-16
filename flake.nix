@@ -18,13 +18,12 @@
         {
           default = pkgs.mkShell {
             packages = with pkgs; [
-              # Go toolchain
-              go
-              golangci-lint
+              # Go toolchain (matches go.mod toolchain version)
+              go_1_24
               goreleaser
 
               # Node for GUI
-              nodejs
+              nodejs_20
 
               # Terminal multiplexers for testing
               tmux
@@ -34,6 +33,7 @@
               gnumake
             ];
 
+            # golangci-lint is installed via 'make lint' to match CI version
             shellHook = ''
               echo "Shellify development environment"
               echo "Go: $(go version)"
@@ -42,7 +42,7 @@
               echo "Commands:"
               echo "  make build        - Build CLI"
               echo "  make test         - Run tests"
-              echo "  make lint         - Run linter"
+              echo "  make lint         - Run linter (installs golangci-lint if needed)"
               echo "  make gui-dev      - Start GUI dev server"
             '';
           };
