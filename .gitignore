@@ -37,7 +37,7 @@ deprecated/
 
 # AI context (kept separate from main codebase)
 CLAUDE.md
-.ai-context/
+.ai/
 
 # GUI build output (until v0.7.0)
 gui/dist/
