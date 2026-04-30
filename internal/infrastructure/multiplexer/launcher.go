@@ -146,9 +146,19 @@ func (l *Launcher) StopZellij(sessionName string) error {
 }
 
 // IsTmuxRunning checks if a tmux session is currently active.
+// Uses list-sessions for exact matching because has-session does prefix matching.
 func (l *Launcher) IsTmuxRunning(sessionName string) bool {
-	cmd := exec.Command("tmux", "has-session", "-t", sessionName)
-	return cmd.Run() == nil
+	cmd := exec.Command("tmux", "list-sessions", "-F", "#{session_name}")
+	output, err := cmd.Output()
+	if err != nil {
+		return false
+	}
+	for _, line := range strings.Split(strings.TrimSpace(string(output)), "\n") {
+		if strings.TrimSpace(line) == sessionName {
+			return true
+		}
+	}
+	return false
 }
 
 // IsZellijRunning checks if a zellij session is currently active.
@@ -163,13 +173,19 @@ func (l *Launcher) IsZellijRunning(sessionName string) bool {
 }
 
 // IsTmuxAttached checks if a tmux session has any clients attached.
+// Uses list-clients with -F to avoid tmux prefix matching on the session target.
 func (l *Launcher) IsTmuxAttached(sessionName string) bool {
-	cmd := exec.Command("tmux", "list-clients", "-t", sessionName)
+	cmd := exec.Command("tmux", "list-clients", "-F", "#{client_session}")
 	output, err := cmd.Output()
 	if err != nil {
 		return false
 	}
-	return len(output) > 0
+	for _, line := range strings.Split(strings.TrimSpace(string(output)), "\n") {
+		if strings.TrimSpace(line) == sessionName {
+			return true
+		}
+	}
+	return false
 }
 
 // IsZellijAttached always returns false as zellij doesn't provide this info easily.

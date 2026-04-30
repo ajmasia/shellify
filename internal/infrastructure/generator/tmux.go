@@ -62,9 +62,12 @@ func (g *TmuxGenerator) Generate(session domain.Session) (string, error) {
 		"",
 	}
 
-	// Kill existing session
-	lines = append(lines, "# Kill existing session if it exists")
-	lines = append(lines, fmt.Sprintf(`tmux kill-session -t "%s" 2>/dev/null || true`, session.SessionName))
+	// Kill existing session — use exact name match to avoid tmux prefix matching
+	lines = append(lines, "# Kill existing session if it exists (exact name match)")
+	lines = append(lines, fmt.Sprintf(
+		`tmux list-sessions -F "#{session_name}" 2>/dev/null | grep -qxF "%s" && tmux kill-session -t "%s" || true`,
+		session.SessionName, session.SessionName,
+	))
 	lines = append(lines, "")
 
 	// Environment variables

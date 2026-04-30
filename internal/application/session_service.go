@@ -419,9 +419,25 @@ func (s *SessionService) FindSessionByID(sessionID string) (domain.Session, stri
 }
 
 // generateSessionName creates a session name from project prefix and session name.
+// Only alphanumerics, hyphens, and underscores are kept to avoid tmux target issues.
 func generateSessionName(prefix, name string) string {
 	sessionName := strings.ToLower(strings.TrimSpace(name))
-	sessionName = strings.ReplaceAll(sessionName, " ", "-")
+
+	var b strings.Builder
+	for _, r := range sessionName {
+		switch {
+		case (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '_':
+			b.WriteRune(r)
+		default:
+			b.WriteRune('-')
+		}
+	}
+	sessionName = b.String()
+
+	for strings.Contains(sessionName, "--") {
+		sessionName = strings.ReplaceAll(sessionName, "--", "-")
+	}
+	sessionName = strings.Trim(sessionName, "-")
 
 	if prefix != "" {
 		return prefix + "_" + sessionName
