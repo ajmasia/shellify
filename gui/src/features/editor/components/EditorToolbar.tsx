@@ -236,7 +236,7 @@ export const EditorToolbar = observer(function EditorToolbar({
           <div className={styles.spacer} />
 
           <Tooltip content="Save">
-            <IconButton onClick={handleSave} variant="primary">
+            <IconButton onClick={handleSave} variant="primary" disabled={!store.isDirty}>
               <SaveIcon />
             </IconButton>
           </Tooltip>
