@@ -61,6 +61,7 @@ func runSessionExport(cmd *cobra.Command, args []string) error {
 
 	outputFlag, _ := cmd.Flags().GetString("output")
 	if outputFlag == "" {
+		fmt.Fprintln(os.Stderr, "# printing to stdout — use -o <file> to save to disk")
 		fmt.Print(string(yamlData))
 		return nil
 	}
