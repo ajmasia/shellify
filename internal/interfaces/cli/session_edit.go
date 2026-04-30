@@ -8,20 +8,20 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ajmasia/shellify/internal/application"
+	"github.com/ajmasia/shellify/internal/domain"
 	"github.com/ajmasia/shellify/internal/infrastructure/storage"
-	"github.com/ajmasia/shellify/internal/interfaces/tui"
 )
 
 var sessionEditCmd = &cobra.Command{
 	Use:   "edit [id|name]",
 	Short: "Edit a session",
-	Long: `Edit a session using the visual GUI editor or directly in $EDITOR.
+	Long: `Edit a session using the visual GUI editor or in $EDITOR as YAML.
 
-By default, opens the session JSON file in your $EDITOR for direct editing.
-Use --gui flag to open the visual layout editor in your browser.
+By default, opens a clean YAML representation of the session in $EDITOR.
+Use --gui to open the visual layout editor in the browser instead.
 
 Examples:
-  sfy session edit my-session              # Open JSON in $EDITOR
+  sfy session edit my-session              # Open YAML in $EDITOR
   sfy session edit my-session --gui        # Visual mode: open GUI editor
   sfy session edit -p my-project --gui     # GUI with project context`,
 	Args: cobra.MaximumNArgs(1),
@@ -33,19 +33,16 @@ func init() {
 	sessionEditCmd.Flags().StringP("project", "p", "", "Project name or ID")
 	sessionEditCmd.Flags().Bool("gui", false, "Open visual GUI editor in browser")
 
-	// Shell completions
 	_ = sessionEditCmd.RegisterFlagCompletionFunc("project", completeProjectNames)
 	sessionEditCmd.ValidArgsFunction = completeSessionNames
 }
 
 func runSessionEdit(cmd *cobra.Command, args []string) error {
 	guiMode, _ := cmd.Flags().GetBool("gui")
-
 	if guiMode {
 		return openGUIForSessionEdit(cmd, args)
 	}
-
-	return openAdvancedEdit(cmd, args)
+	return openYAMLEdit(cmd, args)
 }
 
 func openGUIForSessionEdit(cmd *cobra.Command, args []string) error {
@@ -62,7 +59,6 @@ func openGUIForSessionEdit(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Ensure server is running
 	started, err := ensureServerRunning()
 	if err != nil {
 		return err
@@ -81,7 +77,7 @@ func openGUIForSessionEdit(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func openAdvancedEdit(cmd *cobra.Command, args []string) error {
+func openYAMLEdit(cmd *cobra.Command, args []string) error {
 	store, err := storage.NewStorage()
 	if err != nil {
 		return err
@@ -95,29 +91,59 @@ func openAdvancedEdit(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Show warning
-	fmt.Println("\033[33m[WARN]\033[0m Advanced editing mode")
-	fmt.Println("This will open the session JSON file directly. Invalid changes may break the session.")
-	fmt.Println("I recommend using the visual editor: sfy session edit --gui")
-	fmt.Println()
-
-	confirmed, err := tui.Confirm("Continue?")
+	session, err := sessionSvc.GetSession(projectID, sessionID)
 	if err != nil {
 		return err
 	}
-	if !confirmed {
-		fmt.Println("Aborted")
-		return nil
+
+	yamlData, err := SessionToYAML(session)
+	if err != nil {
+		return fmt.Errorf("serializing session: %w", err)
 	}
 
-	// Get the path to the session file
-	paths, err := storage.NewPaths()
+	tmpFile, err := os.CreateTemp("", "sfy-session-*.yaml")
 	if err != nil {
+		return fmt.Errorf("creating temp file: %w", err)
+	}
+	tmpPath := tmpFile.Name()
+	defer func() { _ = os.Remove(tmpPath) }()
+
+	if _, err := tmpFile.Write(yamlData); err != nil {
+		_ = tmpFile.Close()
+		return fmt.Errorf("writing temp file: %w", err)
+	}
+	if err := tmpFile.Close(); err != nil {
+		return fmt.Errorf("closing temp file: %w", err)
+	}
+
+	if err := openInEditor(tmpPath); err != nil {
 		return err
 	}
-	sessionFile := paths.SessionFile(projectID, sessionID)
 
-	// Open in editor
+	edited, err := os.ReadFile(tmpPath)
+	if err != nil {
+		return fmt.Errorf("reading edited file: %w", err)
+	}
+
+	updated, err := YAMLToSession(edited)
+	if err != nil {
+		return fmt.Errorf("parsing YAML: %w", err)
+	}
+
+	// Preserve the original ID and session name derivation
+	updated.ID = session.ID
+	updated.SessionName = session.SessionName
+
+	input := yamlSessionToUpdateInput(updated)
+	if _, err := sessionSvc.UpdateSession(projectID, sessionID, input); err != nil {
+		return err
+	}
+
+	fmt.Println("Session updated.")
+	return nil
+}
+
+func openInEditor(path string) error {
 	editor := os.Getenv("EDITOR")
 	if editor == "" {
 		editor = os.Getenv("VISUAL")
@@ -125,20 +151,52 @@ func openAdvancedEdit(cmd *cobra.Command, args []string) error {
 	if editor == "" {
 		editor = "vi"
 	}
-	// Expand environment variables in the path
 	editor = os.ExpandEnv(editor)
 
-	editorCmd := exec.Command(editor, sessionFile)
-	editorCmd.Stdin = os.Stdin
-	editorCmd.Stdout = os.Stdout
-	editorCmd.Stderr = os.Stderr
+	cmd := exec.Command(editor, path)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
 
-	fmt.Printf("Opening %s...\n", sessionFile)
-
-	if err := editorCmd.Run(); err != nil {
-		return fmt.Errorf("editor exited with error: %w", err)
+// yamlSessionToUpdateInput converts a parsed domain.Session to an UpdateSessionInput.
+func yamlSessionToUpdateInput(s domain.Session) application.UpdateSessionInput {
+	windows := make([]application.WindowInput, len(s.Windows))
+	for i, w := range s.Windows {
+		windows[i] = application.WindowInput{
+			Name:             w.Name,
+			WorkingDirectory: w.WorkingDirectory,
+			RootDirection:    w.RootDirection,
+			Panes:            domainPanesToPaneInputs(w.Panes),
+		}
 	}
 
-	fmt.Println("Session file saved.")
-	return nil
+	return application.UpdateSessionInput{
+		Name:             &s.Name,
+		Description:      &s.Description,
+		WorkingDirectory: &s.WorkingDirectory,
+		Multiplexer:      &s.TargetMultiplexer,
+		Environment:      s.Environment,
+		PreCommands:      s.PreCommands,
+		PostCommands:     s.PostCommands,
+		Windows:          windows,
+		DefaultWindowID:  &s.DefaultWindowID,
+	}
+}
+
+func domainPanesToPaneInputs(panes []domain.Pane) []application.PaneInput {
+	result := make([]application.PaneInput, len(panes))
+	for i, p := range panes {
+		result[i] = application.PaneInput{
+			ID:               p.ID,
+			Name:             p.Name,
+			Command:          p.Command,
+			WorkingDirectory: p.WorkingDirectory,
+			Size:             p.Size,
+			Direction:        p.Direction,
+			Children:         domainPanesToPaneInputs(p.Children),
+		}
+	}
+	return result
 }
