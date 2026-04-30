@@ -22,7 +22,7 @@ LDFLAGS := -ldflags "-s -w \
 	-X github.com/ajmasia/shellify/internal/interfaces/cli.Commit=$(COMMIT) \
 	-X github.com/ajmasia/shellify/internal/interfaces/cli.BuildDate=$(BUILD_DATE)"
 
-.PHONY: all build build-with-gui run test test-coverage lint fmt tidy clean install help \
+.PHONY: all build build-with-gui run sfy dev-server test test-coverage lint fmt tidy clean install help \
 	gui-install gui-dev gui-build gui-lint gui-check
 
 ## all: Build the binary (default target)
@@ -38,6 +38,14 @@ build:
 ## run: Build and run the binary with optional ARGS
 run: build
 	@$(BIN_DIR)/$(BINARY_NAME) $(ARGS)
+
+## sfy: Run directly via go run (no build step). Usage: make sfy ARGS="session list"
+sfy:
+	@./dev $(ARGS)
+
+## dev-server: Start API server via go run (no build step)
+dev-server:
+	@./dev server $(ARGS)
 
 ## test: Run all tests
 test:

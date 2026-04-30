@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Quick development runner — avoids a full build step.
+# Usage: ./dev <sfy args>
+#   ./dev session list
+#   ./dev session export my-session -p my-project
+#   ./dev server
+
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VERSION=$(cat "$REPO_ROOT/VERSION")
+COMMIT=$(git -C "$REPO_ROOT" rev-parse --short HEAD 2>/dev/null || echo "dev")
+BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+exec go run \
+  -ldflags "-X github.com/ajmasia/shellify/internal/interfaces/cli.Version=${VERSION} \
+            -X github.com/ajmasia/shellify/internal/interfaces/cli.Commit=${COMMIT} \
+            -X github.com/ajmasia/shellify/internal/interfaces/cli.BuildDate=${BUILD_DATE}" \
+  "${REPO_ROOT}/cmd/sfy/main.go" "$@"
