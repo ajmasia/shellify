@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-04-30
+
+### Added
+
+- `sfy session export [id|name]` — serialize a session to human-readable YAML (stdout by default, or `-o <file>` to write to disk)
+- `sfy session import <file.yaml> -p <project>` — create a session from a YAML file; reads from stdin when file is `-`
+- `session edit` now opens `$EDITOR` with a clean YAML representation; changes are parsed and validated before saving
+- `./dev` script and `make sfy ARGS=...` / `make dev-server` targets for fast iteration without a full build step
+
+### Changed
+
+- `session edit` no longer prompts for confirmation before opening the editor
+
 ## [0.9.7] - 2026-04-30
 
 ### Changed
