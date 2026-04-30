@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.6] - 2026-04-30
+
+### Fixed
+
+- tmux prefix matching causing sessions with shared name prefixes to interfere with each other (status reporting, launch, kill)
+- Special characters in session names (e.g. parentheses from cloned sessions) stripped to avoid tmux target syntax issues
+
 ## [0.9.5] - 2026-01-16
 
 ### Fixed
