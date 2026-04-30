@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.7] - 2026-04-30
+
+### Changed
+
+- Save button in session editor is now disabled when there are no unsaved changes
+
 ## [0.9.6] - 2026-04-30
 
 ### Fixed
