@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.3] - 2026-05-04
+
+### Fixed
+
+- YAML session editor: renaming a window or deleting the default window no longer silently aborts the save — `defaultWindow` now falls back to the first window when the referenced name is not found
+
 ## [0.10.2] - 2026-05-04
 
 ### Fixed
