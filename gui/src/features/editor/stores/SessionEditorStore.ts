@@ -5,6 +5,46 @@ import { createDefaultPane, createDefaultWindow, createDefaultSession, generateI
 
 const MAX_WINDOWS = 10
 
+function normalizePane(pane: EditorPane): EditorPane {
+  if (!pane.children || pane.children.length === 0) {
+    return pane
+  }
+
+  pane.children = pane.children.map(normalizePane)
+
+  // Merge children that share the same direction as this container into this level
+  const merged: EditorPane[] = []
+  for (const child of pane.children) {
+    if (child.children && child.children.length > 0 && child.direction === pane.direction) {
+      for (const grandchild of child.children) {
+        merged.push({ ...grandchild, size: (child.size * grandchild.size) / 100 })
+      }
+    } else {
+      merged.push(child)
+    }
+  }
+  pane.children = merged
+
+  // Collapse single-child containers by hoisting the child's content into this pane
+  if (pane.children.length === 1) {
+    const only = pane.children[0]
+    pane.name = only.name
+    pane.command = only.command
+    pane.workingDirectory = only.workingDirectory
+    pane.environment = only.environment
+    if (only.children && only.children.length > 0) {
+      pane.children = only.children
+      pane.direction = only.direction
+    } else {
+      delete pane.children
+      delete pane.direction
+    }
+    return normalizePane(pane)
+  }
+
+  return pane
+}
+
 export class SessionEditorStore {
   session: EditorSession = createDefaultSession()
   selectedPaneId: string | null = null
@@ -84,6 +124,7 @@ export class SessionEditorStore {
   // Session management
   loadSession(session: EditorSession): void {
     this.session = session
+    this.normalizeAllWindows()
     this.history = []
     this.historyIndex = -1
     this.saveSnapshot()
@@ -257,42 +298,38 @@ export class SessionEditorStore {
     const pane = this.findPane(paneId)
     if (!pane) return null
 
+    let newPaneId: string
+
     if (pane.children && pane.children.length > 0) {
-      // Already has children
       if (pane.direction === direction) {
-        // Same direction, add sibling
+        // Same direction: add a new sibling inside this container
         const newPane = createDefaultPane()
         newPane.size = 100 / (pane.children.length + 1)
         pane.children.forEach((child) => {
           child.size = 100 / (pane.children!.length + 1)
         })
         pane.children.push(newPane)
-        this.selectedPaneId = newPane.id
-        this.saveSnapshot()
-        return newPane.id
+        newPaneId = newPane.id
       } else {
-        // Different direction, wrap in new container
+        // Different direction: wrap existing children and new pane in a new container
         const newPane = createDefaultPane()
         newPane.size = 50
-        pane.children.forEach((child) => {
-          child.size = child.size * 0.5
-        })
 
-        const wrapper: EditorPane = {
+        const existingWrapper: EditorPane = {
           id: generateId(),
           name: '',
           command: '',
           size: 50,
-          children: [newPane],
-          direction: direction,
+          children: pane.children.map((c) => ({ ...c, size: c.size })),
+          direction: pane.direction,
         }
-        pane.children.push(wrapper)
-        this.selectedPaneId = newPane.id
-        this.saveSnapshot()
-        return newPane.id
+
+        pane.children = [existingWrapper, newPane]
+        pane.direction = direction
+        newPaneId = newPane.id
       }
     } else {
-      // Leaf pane, convert to container
+      // Leaf pane: convert to container with original content + new pane
       const originalContent: EditorPane = {
         id: generateId(),
         name: pane.name,
@@ -312,10 +349,13 @@ export class SessionEditorStore {
       pane.children = [originalContent, newPane]
       pane.direction = direction
 
-      this.selectedPaneId = newPane.id
-      this.saveSnapshot()
-      return newPane.id
+      newPaneId = newPane.id
     }
+
+    this.normalizeAllWindows()
+    this.selectedPaneId = newPaneId
+    this.saveSnapshot()
+    return newPaneId
   }
 
   removePane(paneId: string): string | null {
@@ -329,6 +369,7 @@ export class SessionEditorStore {
           this.session.windows.splice(i, 1)
           const nextWindow = this.session.windows[0]
           this.selectedWindowId = nextWindow.id
+          this.normalizeAllWindows()
           const nextPaneId = this.findFirstLeafPane(nextWindow.panes[0])
           this.selectedPaneId = nextPaneId
           this.saveSnapshot()
@@ -340,17 +381,21 @@ export class SessionEditorStore {
 
       const result = this.removePaneFromArray(paneId, window.panes, window)
       if (result.removed) {
+        this.normalizeAllWindows()
         this.saveSnapshot()
-        if (result.nextPaneId) {
-          this.selectedPaneId = result.nextPaneId
-          return result.nextPaneId
-        }
+        // Always select a leaf pane to avoid subsequent operations targeting a container
         const nextPaneId = this.findFirstLeafPane(window.panes[0])
         this.selectedPaneId = nextPaneId
         return nextPaneId
       }
     }
     return null
+  }
+
+  private normalizeAllWindows(): void {
+    for (const window of this.session.windows) {
+      window.panes = window.panes.map(normalizePane)
+    }
   }
 
   private removePaneFromArray(
