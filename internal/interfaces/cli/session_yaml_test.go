@@ -282,7 +282,7 @@ windows:
 	assert.Equal(t, got.Windows[1].ID, got.DefaultWindowID)
 }
 
-func TestYAMLToSession_ErrorOnInvalidDefaultWindow(t *testing.T) {
+func TestYAMLToSession_FallbackWhenDefaultWindowNotFound(t *testing.T) {
 	input := `
 name: test
 defaultWindow: nonexistent
@@ -291,9 +291,9 @@ windows:
     panes:
       - command: bash
 `
-	_, err := YAMLToSession([]byte(input))
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "nonexistent")
+	got, err := YAMLToSession([]byte(input))
+	require.NoError(t, err)
+	assert.Equal(t, got.Windows[0].ID, got.DefaultWindowID, "should fall back to first window when defaultWindow name does not match")
 }
 
 func TestYAMLStableIDs(t *testing.T) {

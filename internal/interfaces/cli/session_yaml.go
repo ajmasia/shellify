@@ -173,7 +173,7 @@ func YAMLToSession(data []byte) (domain.Session, error) {
 		s.Windows[i] = w
 	}
 
-	// Resolve default window by name
+	// Resolve default window by name; fall back to first window if not found.
 	defaultWindowName := strings.TrimSpace(ys.DefaultWindow)
 	if defaultWindowName != "" {
 		for _, w := range s.Windows {
@@ -182,10 +182,8 @@ func YAMLToSession(data []byte) (domain.Session, error) {
 				break
 			}
 		}
-		if s.DefaultWindowID == "" {
-			return domain.Session{}, fmt.Errorf("defaultWindow %q does not match any window name", defaultWindowName)
-		}
-	} else if len(s.Windows) > 0 {
+	}
+	if s.DefaultWindowID == "" && len(s.Windows) > 0 {
 		s.DefaultWindowID = s.Windows[0].ID
 	}
 
