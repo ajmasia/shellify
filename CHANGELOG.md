@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.2] - 2026-05-04
+
+### Fixed
+
+- Release workflow now deletes any existing GitHub release before running GoReleaser, preventing asset-upload conflicts when a tag is pushed more than once
+
+## [0.10.1] - 2026-05-04
+
+### Fixed
+
+- GUI session editor: repeated split/remove operations were accumulating redundant intermediate container panes, producing deeply nested and unreadable YAML exports
+- Pane tree is now normalized after every split, remove, and session load — collapsing single-child containers and merging same-direction containers
+
 ## [0.10.0] - 2026-04-30
 
 ### Added
