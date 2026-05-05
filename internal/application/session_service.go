@@ -518,9 +518,42 @@ func convertPaneInputsToDomain(inputs []PaneInput, windowNum int, direction doma
 			Direction:        p.Direction,
 		}
 
-		// Recursively convert children
+		// Recursively convert children without flat-pane wrapping
 		if len(p.Children) > 0 {
-			pane.Children = convertPaneInputsToDomain(p.Children, windowNum, p.Direction)
+			pane.Children = convertPaneChildrenToDomain(p.Children, windowNum)
+		}
+
+		result[i] = pane
+	}
+	return result
+}
+
+// convertPaneChildrenToDomain converts child PaneInputs to domain panes without the
+// flat-pane wrapping logic. Called recursively for panes that already have a defined structure.
+func convertPaneChildrenToDomain(inputs []PaneInput, windowNum int) []domain.Pane {
+	result := make([]domain.Pane, len(inputs))
+	for i, p := range inputs {
+		paneID := p.ID
+		if paneID == "" {
+			paneID = fmt.Sprintf("w%d-p%d", windowNum, i+1)
+		}
+
+		size := p.Size
+		if size == 0 {
+			size = 100.0 / float64(len(inputs))
+		}
+
+		pane := domain.Pane{
+			ID:               paneID,
+			Name:             strings.TrimSpace(p.Name),
+			Command:          strings.TrimSpace(p.Command),
+			WorkingDirectory: strings.TrimSpace(p.WorkingDirectory),
+			Size:             size,
+			Direction:        p.Direction,
+		}
+
+		if len(p.Children) > 0 {
+			pane.Children = convertPaneChildrenToDomain(p.Children, windowNum)
 		}
 
 		result[i] = pane
