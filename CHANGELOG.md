@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.5] - 2026-05-22
+
+### Changed
+
+- tmux session scripts now launch pane commands as the initial process via `$SHELL -i -c 'cmd; exec $SHELL'` instead of injecting them with `send-keys`; working directories are set directly on `new-session`, `new-window`, and `split-window` via the `-c` flag
+
+### Fixed
+
+- Shell aliases and functions defined in `.bashrc`/`.zshrc` are now available in pane commands — the `-i` flag sources the user's interactive shell config before running the command
+- Commands containing single quotes no longer break the generated script — single quotes are now escaped with the `'\''` idiom
+
 ## [0.10.4] - 2026-05-05
 
 ### Fixed

@@ -28,6 +28,44 @@ type windowPanesResult struct {
 	leafMappings []paneMapping
 }
 
+func getFirstLeaf(pane *domain.Pane) *domain.Pane {
+	if len(pane.Children) == 0 {
+		return pane
+	}
+	return getFirstLeaf(&pane.Children[0])
+}
+
+func (g *TmuxGenerator) resolvePaneDir(pane *domain.Pane) string {
+	if pane == nil || pane.WorkingDirectory == "" {
+		return "$WORKING_DIR"
+	}
+	dir := pane.WorkingDirectory
+	if strings.HasPrefix(dir, "~/") {
+		return "$HOME" + dir[1:]
+	}
+	if dir == "~" {
+		return "$HOME"
+	}
+	if !isAbsolutePath(dir) {
+		return "$WORKING_DIR/" + dir
+	}
+	return dir
+}
+
+func buildInlineCommand(cmd string) string {
+	if cmd == "" {
+		return ""
+	}
+	// Single quotes must use '\'' (exit-single-quote, escaped-quote, re-enter-single-quote)
+	// because inside the outer double-quoted shell string, \' is not a valid escape for '.
+	// Double quotes must be escaped as \" to avoid ending the outer double-quoted string.
+	// $SHELL is expanded at script runtime so aliases and functions from the user's rc file
+	// are available via the -i (interactive) flag.
+	escaped := strings.ReplaceAll(cmd, `'`, `'\''`)
+	escaped = strings.ReplaceAll(escaped, `"`, `\"`)
+	return fmt.Sprintf(`"$SHELL -i -c '%s; exec $SHELL'"`, escaped)
+}
+
 func (g *TmuxGenerator) Generate(session domain.Session) (string, error) {
 	sessionDir := session.WorkingDirectory
 	if sessionDir == "" {
@@ -86,7 +124,6 @@ func (g *TmuxGenerator) Generate(session domain.Session) (string, error) {
 		lines = append(lines, "")
 	}
 
-	// Create session with first window
 	if len(session.Windows) == 0 {
 		lines = append(lines, `echo "No windows defined"`)
 		lines = append(lines, "exit 1")
@@ -94,23 +131,28 @@ func (g *TmuxGenerator) Generate(session domain.Session) (string, error) {
 	}
 
 	firstWindow := &session.Windows[0]
-	lines = append(lines, "# Create session with first window (using detected terminal size)")
-	lines = append(lines, fmt.Sprintf(
-		`tmux new-session -d -s "%s" -n "%s" -c "$WORKING_DIR" -x "$TERM_COLS" -y "$TERM_LINES"`,
-		session.SessionName, firstWindow.Name,
-	))
-	lines = append(lines, "")
 
-	// Set environment in tmux session
-	if len(session.Environment) > 0 {
-		lines = append(lines, "# Set environment in tmux session")
-		for key, value := range session.Environment {
-			lines = append(lines, fmt.Sprintf(`tmux setenv -t "%s" %s "%s"`, session.SessionName, key, value))
-		}
-		lines = append(lines, "")
+	// Resolve first leaf pane for new-session
+	firstPaneDir := "$WORKING_DIR"
+	firstPaneCmd := ""
+	if len(firstWindow.Panes) > 0 {
+		firstLeaf := getFirstLeaf(&firstWindow.Panes[0])
+		firstPaneDir = g.resolvePaneDir(firstLeaf)
+		firstPaneCmd = buildInlineCommand(firstLeaf.Command)
 	}
 
-	// First window panes
+	lines = append(lines, "# Create session with first window (using detected terminal size)")
+	newSessionLine := fmt.Sprintf(
+		`tmux new-session -d -s "%s" -n "%s" -c "%s" -x "$TERM_COLS" -y "$TERM_LINES"`,
+		session.SessionName, firstWindow.Name, firstPaneDir,
+	)
+	if firstPaneCmd != "" {
+		newSessionLine += " " + firstPaneCmd
+	}
+	lines = append(lines, newSessionLine)
+	lines = append(lines, "")
+
+	// First window pane titles and splits
 	lines = append(lines, fmt.Sprintf("# Window 1: %s", firstWindow.Name))
 	result := g.generateWindowPanes(firstWindow, session.SessionName)
 	lines = append(lines, result.splitLines...)
@@ -120,8 +162,24 @@ func (g *TmuxGenerator) Generate(session domain.Session) (string, error) {
 	// Additional windows
 	for i := 1; i < len(session.Windows); i++ {
 		window := &session.Windows[i]
+
+		winPaneDir := "$WORKING_DIR"
+		winPaneCmd := ""
+		if len(window.Panes) > 0 {
+			firstLeaf := getFirstLeaf(&window.Panes[0])
+			winPaneDir = g.resolvePaneDir(firstLeaf)
+			winPaneCmd = buildInlineCommand(firstLeaf.Command)
+		}
+
 		lines = append(lines, fmt.Sprintf("# Window %d: %s", i+1, window.Name))
-		lines = append(lines, fmt.Sprintf(`tmux new-window -t "%s" -n "%s" -c "$WORKING_DIR"`, session.SessionName, window.Name))
+		newWindowLine := fmt.Sprintf(
+			`tmux new-window -t "%s" -n "%s" -c "%s"`,
+			session.SessionName, window.Name, winPaneDir,
+		)
+		if winPaneCmd != "" {
+			newWindowLine += " " + winPaneCmd
+		}
+		lines = append(lines, newWindowLine)
 		result := g.generateWindowPanes(window, session.SessionName)
 		lines = append(lines, result.splitLines...)
 		lines = append(lines, g.generatePaneCommands(result.leafMappings, session.SessionName, window.Name)...)
@@ -252,10 +310,18 @@ func (g *TmuxGenerator) generateWindowPanes(window *domain.Window, sessionName s
 			currentPaneSize := cumulative[i-1]
 			percentage := int((remainingSize / currentPaneSize) * 100)
 
-			lines = append(lines, fmt.Sprintf(
-				`tmux split-window %s -l %d%% -t "%s" -c "$WORKING_DIR"`,
-				splitFlag, percentage, splitTarget,
-			))
+			childFirstLeaf := getFirstLeaf(&pane.Children[i])
+			paneDir := g.resolvePaneDir(childFirstLeaf)
+			inlineCmd := buildInlineCommand(childFirstLeaf.Command)
+
+			splitLine := fmt.Sprintf(
+				`tmux split-window %s -l %d%% -t "%s" -c "%s"`,
+				splitFlag, percentage, splitTarget, paneDir,
+			)
+			if inlineCmd != "" {
+				splitLine += " " + inlineCmd
+			}
+			lines = append(lines, splitLine)
 
 			createdPositions[childFirstLeafPos] = true
 		}
@@ -286,23 +352,8 @@ func (g *TmuxGenerator) generatePaneCommands(leafMappings []paneMapping, session
 			paneTarget = fmt.Sprintf("%s.$((PANE_BASE+%d))", windowTarget, paneOffset)
 		}
 
-		// Set pane title
 		if pane.Name != "" {
 			lines = append(lines, fmt.Sprintf(`tmux select-pane -t "%s" -T "%s"`, paneTarget, pane.Name))
-		}
-
-		// Change directory
-		if pane.WorkingDirectory != "" {
-			dir := pane.WorkingDirectory
-			if !isAbsolutePath(dir) {
-				dir = "$WORKING_DIR/" + dir
-			}
-			lines = append(lines, fmt.Sprintf(`tmux send-keys -t "%s" "cd %s" Enter`, paneTarget, dir))
-		}
-
-		// Execute command
-		if pane.Command != "" {
-			lines = append(lines, fmt.Sprintf(`tmux send-keys -t "%s" "%s" Enter`, paneTarget, pane.Command))
 		}
 	}
 

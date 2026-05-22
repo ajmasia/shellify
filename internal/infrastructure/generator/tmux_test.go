@@ -26,12 +26,12 @@ func TestTmuxGenerator_Generate(t *testing.T) {
 		// Verify working directory (~ expanded to $HOME)
 		assert.Contains(t, output, `WORKING_DIR="$HOME/projects"`)
 
-		// Verify session creation
+		// Verify session creation with inline command
 		assert.Contains(t, output, `tmux new-session -d -s "proj_dev" -n "editor"`)
+		assert.Contains(t, output, `"$SHELL -i -c 'nvim .; exec $SHELL'"`)
 
-		// Verify pane command
-		assert.Contains(t, output, `tmux send-keys`)
-		assert.Contains(t, output, `"nvim ." Enter`)
+		// Verify no send-keys for commands
+		assert.NotContains(t, output, `tmux send-keys`)
 
 		// Verify attach
 		assert.Contains(t, output, `tmux attach-session -t "proj_dev"`)
@@ -42,12 +42,14 @@ func TestTmuxGenerator_Generate(t *testing.T) {
 		output, err := gen.Generate(session)
 		require.NoError(t, err)
 
-		// Verify split command
+		// Verify split command with inline command for second pane (no command → no inline)
 		assert.Contains(t, output, "tmux split-window -h")
 
-		// Verify both panes referenced
-		assert.Contains(t, output, "editor")
-		assert.Contains(t, output, "nvim .")
+		// First pane gets inline command via new-session
+		assert.Contains(t, output, `"$SHELL -i -c 'nvim .; exec $SHELL'"`)
+
+		// No send-keys
+		assert.NotContains(t, output, `tmux send-keys`)
 	})
 
 	t.Run("generates script with multiple windows", func(t *testing.T) {
@@ -83,7 +85,7 @@ func TestTmuxGenerator_Generate(t *testing.T) {
 
 		assert.Contains(t, output, `export NODE_ENV="development"`)
 		assert.Contains(t, output, `export DEBUG="true"`)
-		assert.Contains(t, output, `tmux setenv`)
+		assert.NotContains(t, output, `tmux setenv`)
 	})
 
 	t.Run("handles pre and post commands", func(t *testing.T) {
@@ -109,6 +111,27 @@ func TestTmuxGenerator_Generate(t *testing.T) {
 
 		assert.Contains(t, output, `echo "No windows defined"`)
 		assert.Contains(t, output, "exit 1")
+	})
+}
+
+func TestBuildInlineCommand(t *testing.T) {
+	t.Run("returns empty for empty command", func(t *testing.T) {
+		assert.Equal(t, "", buildInlineCommand(""))
+	})
+
+	t.Run("wraps simple command", func(t *testing.T) {
+		result := buildInlineCommand("nvim .")
+		assert.Equal(t, `"$SHELL -i -c 'nvim .; exec $SHELL'"`, result)
+	})
+
+	t.Run("escapes single quotes with apostrophe trick", func(t *testing.T) {
+		result := buildInlineCommand("fettly-show-banner 'Genially Mono'")
+		assert.Equal(t, `"$SHELL -i -c 'fettly-show-banner '\''Genially Mono'\''; exec $SHELL'"`, result)
+	})
+
+	t.Run("escapes double quotes", func(t *testing.T) {
+		result := buildInlineCommand(`fettly-show-banner "Genially Mono"`)
+		assert.Equal(t, `"$SHELL -i -c 'fettly-show-banner \"Genially Mono\"; exec $SHELL'"`, result)
 	})
 }
 
@@ -155,8 +178,8 @@ func TestTmuxGenerator_PaneWorkingDirectory(t *testing.T) {
 		output, err := gen.Generate(session)
 		require.NoError(t, err)
 
-		// Should prefix with $WORKING_DIR
-		assert.Contains(t, output, `cd $WORKING_DIR/src`)
+		assert.Contains(t, output, `-c "$WORKING_DIR/src"`)
+		assert.NotContains(t, output, `tmux send-keys`)
 	})
 
 	t.Run("handles absolute working directory", func(t *testing.T) {
@@ -165,8 +188,8 @@ func TestTmuxGenerator_PaneWorkingDirectory(t *testing.T) {
 		output, err := gen.Generate(session)
 		require.NoError(t, err)
 
-		// Should use path as-is
-		assert.Contains(t, output, `cd /tmp/test`)
+		assert.Contains(t, output, `-c "/tmp/test"`)
+		assert.NotContains(t, output, `tmux send-keys`)
 	})
 
 	t.Run("handles home-relative working directory", func(t *testing.T) {
@@ -175,8 +198,8 @@ func TestTmuxGenerator_PaneWorkingDirectory(t *testing.T) {
 		output, err := gen.Generate(session)
 		require.NoError(t, err)
 
-		// Should use path as-is
-		assert.Contains(t, output, `cd ~/other`)
+		assert.Contains(t, output, `-c "$HOME/other"`)
+		assert.NotContains(t, output, `tmux send-keys`)
 	})
 }
 
